@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>CustomQuests.E17.Server</AssemblyName>
+    <Version>0.1.1</Version>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <SptRuntime Condition="'$(SptRuntime)' == ''">C:\SPTNEW lilbit\SPT_Runtime</SptRuntime>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Reference Include="SPTarkov.Server.Core" HintPath="$(SptRuntime)\SPTarkov.Server.Core.dll" Private="false" />
+    <Reference Include="SPTarkov.Common" HintPath="$(SptRuntime)\SPTarkov.Common.dll" Private="false" />
+    <Reference Include="SPTarkov.DI" HintPath="$(SptRuntime)\SPTarkov.DI.dll" Private="false" />
+    <Reference Include="SemanticVersioning" HintPath="$(SptRuntime)\SemanticVersioning.dll" Private="false" />
+  </ItemGroup>
+</Project>
