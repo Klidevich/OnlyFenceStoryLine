@@ -15,7 +15,7 @@ using VisitAPI.ChapterUI;
 namespace CustomQuests.E17;
 
 // Client integration for the content included in this release.
-[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.1.1")]
+[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.1.2")]
 [BepInDependency("com.sora.visitapi")]
 public sealed class Plugin : BaseUnityPlugin
 {
@@ -45,7 +45,7 @@ public sealed class Plugin : BaseUnityPlugin
         E17Text.Lookup = source => VisitAPI.Loc.Key(E17Text.Prefix + source) ?? source;
         harmony = new Harmony("com.klidevich.customquests.e17");
         harmony.PatchAll(typeof(Plugin).Assembly);
-        Logger.LogInfo("OnlyFenceStoryLine runtime 0.1.1 loaded; current objectives, localized title and quest inventory delivery.");
+        Logger.LogInfo("OnlyFenceStoryLine runtime 0.1.2 loaded; Russian, English and Korean localization.");
     }
 
     void OnDestroy()
