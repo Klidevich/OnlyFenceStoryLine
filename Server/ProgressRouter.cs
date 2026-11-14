@@ -28,6 +28,11 @@ public static class ProgressPolicy
         "intro2_rescue", "intro2_bill", "intro2_closed", "intro2_act", "intro2_original", "intro2_proof",
         "intro2_motive", "intro2_company", "intro2_delivery", "intro2_van", "intro2_briefed"
         , "q2Ready", "q2Brief", "q2Wait", "q2Replacement", "q2Reported", "q2Result", "q2Cargo", "q2Received"
+        , "q3Rudin", "q3Name", "q3Brief", "q3Weight", "q3PartsAcknowledged", "q3BooksAcknowledged",
+        "q3PaidShown", "q3Payment", "q3Ransom", "q3Expenses", "q3Condition",
+        "intro3_rescue", "intro3_delivery", "intro3_van", "q2Friend", "q1RouteReminder", "q2RouteReminder", "q2ReportedReminder",
+        "q2ReplacementRequested", "q2ReplacementReceived",
+        "q4Ready", "q4Brief", "q4Wait", "q4ClaimAcknowledged", "q4Debt", "q4BusinessAcknowledged", "q4PaidShown", "q4Received"
     };
     public static MongoId Id(string fact) => new(Convert.ToHexString(
         MD5.HashData(Encoding.UTF8.GetBytes("visitapi.var|cq_e17_v1_" + fact)))[..24].ToLowerInvariant());

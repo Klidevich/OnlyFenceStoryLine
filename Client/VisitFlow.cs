@@ -37,6 +37,12 @@ internal static class VisitFlow
     }
     static bool OurTree(DialogTree t) => t?.TraderId == VisitEntryPolicy.FenceId && t.Nodes.ContainsKey("e17_intro") && t.Nodes.ContainsKey("e17_root");
 
+    [HarmonyPatch(typeof(DialogTemplateBuilder), nameof(DialogTemplateBuilder.Register))]
+    static class PrepareDialogueText
+    {
+        static void Prefix(DialogTree tree) => DialogueText.Prepare(tree);
+    }
+
     [HarmonyPatch(typeof(OptionMap), nameof(OptionMap.Icon))]
     static class OtherQuestionsIcon
     {
@@ -77,6 +83,8 @@ internal static class VisitFlow
         if (!ConversationPolicy.Allowed(target, option.AcceptIds.Count > 0 || option.CompleteIds.Count > 0 ||
             option.HandoverId != null, key => Has(qc, key))) return false;
         if (!Q2Flow.Allowed(option, qc)) return false;
+        if (!Q3Flow.Allowed(option, qc)) return false;
+        if (!Q4Flow.Allowed(option, qc)) return false;
         if (option.AcceptIds.Contains(VisitEntryPolicy.FirstQuestId) && !Q1FlowPolicy.CanAccept(key => Has(qc, key))) return false;
         if (target == "e17_resume") return !Q1FlowPolicy.CanAccept(key => Has(qc, key));
         if (target == "e17_offer") return q?.QuestStatus == EQuestStatus.AvailableForStart && Q1FlowPolicy.CanAccept(key => Has(qc, key));
@@ -153,6 +161,8 @@ internal static class VisitFlow
             else if (q.QuestStatus == EQuestStatus.Success)
             {
                 if (!Has(quests, "finished")) forceNode = NarrativePolicy.Preparing(key => Has(quests, key)) ? "e17_done_ready" : "e17_done_new";
+                else if (Q4Flow.Available(quests) && Q4Flow.Begun(quests)) forceNode = Q4Flow.Entry(quests);
+                else if (Q3Flow.Available(quests) && Q3Flow.Begun(quests)) forceNode = Q3Flow.Entry(quests);
                 else if (Q2Flow.Quest(quests) != null && (Has(quests, "q2Ready") || Q2Flow.Quest(quests).QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish or EQuestStatus.Success))
                     forceNode = Q2Flow.Entry(quests);
             }
@@ -184,6 +194,8 @@ internal static class VisitFlow
             var stage = Q1FlowPolicy.StageFact(node);
             var marked = stage != null && Mark(quests, stage);
             marked |= Q2Flow.Shown(node, quests);
+            marked |= Q3Flow.Shown(node, quests);
+            marked |= Q4Flow.Shown(node, quests);
             if (!NarrativePolicy.Facts.TryGetValue(node, out var fact))
             {
                 if (marked) Plugin.Instance.StartCoroutine(RefreshChoices(VisitFlow.dialog, dialog));
@@ -203,6 +215,19 @@ internal static class VisitFlow
         yield return null;
         if (Session(dc) && ReferenceEquals(dc.CurrentDialog, shown) && !shown.IsBlocked) DialogPage.Redraw(dc, true);
     }
+    static string ReturnEntry()
+    {
+        // Optional questions return to current progress, never to the answer just heard.
+        if (returnNode.StartsWith("e17_q4_", StringComparison.Ordinal)) return Q4Flow.Entry(quests);
+        if (returnNode.StartsWith("e17_q3_", StringComparison.Ordinal)) return Q3Flow.Entry(quests);
+        if (returnNode.StartsWith("e17_q2_", StringComparison.Ordinal)) return Q2Flow.Entry(quests);
+        var q = First(quests);
+        if (VisitEntryPolicy.NeedsBriefing((int?)q?.QuestStatus ?? 0))
+            return Q1FlowPolicy.BriefingEntry(key => Has(quests, key));
+        if (q?.QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish)
+            return Q1FlowPolicy.ActiveEntry(Given(q, NarrativePolicy.Ticket), Given(q, NarrativePolicy.Radio));
+        return "e17_root";
+    }
     [HarmonyPatch(typeof(BaseTraderDialogController), nameof(BaseTraderDialogController.SetCurrentDialog))]
     static class ReturnToQuestion
     {
@@ -210,9 +235,11 @@ internal static class VisitFlow
         {
             if (!ReferenceEquals(__instance, VisitFlow.dialog) || dialog == null || tree == null ||
                 !DialogTemplateBuilder.NodeByDialog.TryGetValue(dialog.Id, out var node)) return;
-            var destination = node == "e17_return" ? returnNode :
+            var destination = node == "e17_return" ? ReturnEntry() :
                 node == "e17_resume" ? Q1FlowPolicy.BriefingEntry(key => Has(quests, key)) :
-                node is "e17_q2_entry" or "e17_q2_continue" ? Q2Flow.Entry(quests) : null;
+                node is "e17_q2_entry" or "e17_q2_continue" ? Q2Flow.Entry(quests) :
+                node is "e17_q3_entry" or "e17_q3_continue" ? Q3Flow.Entry(quests) :
+                node is "e17_q4_entry" or "e17_q4_continue" ? Q4Flow.Entry(quests) : null;
             if (destination != null) dialog = __instance.method_0(OptionMap.Entry(tree, destination));
         }
     }
@@ -223,17 +250,23 @@ internal static class VisitFlow
         static bool Prefix(ClientDialogController __instance, BaseTraderDialogLine line, ref Task __result)
         {
             if (!Session(__instance) || line?.Template == null || !options.TryGetValue(line.Template.Id, out var entry)) return true;
-            if (extra.Contains(entry.option.Target) || Q2Flow.Question(entry.option.Target)) returnNode = entry.node;
-            if (!Q2Flow.Chosen(entry.option, quests))
+            if (extra.Contains(entry.option.Target) || Q2Flow.Question(entry.option.Target) || Q3Flow.Question(entry.option.Target) || Q4Flow.Question(entry.option.Target)) returnNode = entry.node;
+            if (!ReferenceEquals(replay, line) && (!Q3Flow.Allowed(entry.option, quests) || !Q4Flow.Allowed(entry.option, quests)))
             {
                 __result = RefreshExpiredParcel(__instance);
                 return false;
             }
-            if (entry.option.HandoverId != VisitEntryPolicy.FirstQuestId || ReferenceEquals(replay, line)) return true;
+            if (!Q2Flow.Chosen(entry.option, quests) || !Q4Flow.Chosen(entry.option, quests))
+            {
+                __result = RefreshExpiredParcel(__instance);
+                return false;
+            }
+            if (!SpecificHandover(entry.option.HandoverId) || ReferenceEquals(replay, line)) return true;
             __result = handoverBusy || !Allowed(entry.option, quests) ? Task.CompletedTask : Handover(__instance, line, entry.option);
             return false;
         }
     }
+    static bool SpecificHandover(string questId) => questId == VisitEntryPolicy.FirstQuestId || questId == Q3Policy.QuestId || questId == Q4Policy.QuestId;
     static async Task RefreshExpiredParcel(ClientDialogController dc)
     {
         // ExecuteLine has already blocked this page. Rebuild only after the click unwinds.
@@ -244,13 +277,17 @@ internal static class VisitFlow
     static class SuppressGenericHandover
     {
         // Our item-specific confirmation replaces the generic first-matching-item event.
-        static bool Prefix(string questId, QuestController quests) => questId != VisitEntryPolicy.FirstQuestId ||
+        static bool Prefix(string questId, QuestController quests) => !SpecificHandover(questId) ||
             !ReferenceEquals(quests, VisitFlow.quests) || tree == null;
     }
     static async Task Handover(ClientDialogController dc, BaseTraderDialogLine line, DialogOption option)
     {
-        var qc = quests; var q = First(qc);
-        var tpl = option.Target.StartsWith("e17_ticket_") ? NarrativePolicy.Ticket : NarrativePolicy.Radio;
+        var qc = quests; var q = qc.Quests.GetConditional(option.HandoverId);
+        var tpl = option.HandoverId == Q4Policy.QuestId
+            ? (option.Target == "e17_q4_claim" ? Q4Policy.Claim : Q4Policy.BusinessReply)
+            : option.HandoverId == Q3Policy.QuestId
+            ? (option.Target.StartsWith("e17_q3_parts_", StringComparison.Ordinal) ? Q3Policy.Parts : Q3Policy.Books)
+            : (option.Target.StartsWith("e17_ticket_", StringComparison.Ordinal) ? NarrativePolicy.Ticket : NarrativePolicy.Radio);
         var condition = q.GetConditions<ConditionHandoverItem>(EQuestStatus.AvailableForFinish).Single(c => c.target.Contains(tpl));
         var items = qc.GetItemsForCondition(condition);
         if (items == null || items.Length == 0) return;
@@ -295,7 +332,8 @@ internal static class VisitFlow
             // New work or at least one actual, unsurrendered hand-in item warrants a visit.
             // TraderBadge still owns its config, trader unlock checks and other mods' quests.
             __result = q.Template != null && QuestOps.IsLobby(qc) && QuestOps.IsLive(qc) &&
-                ChapterChain.Reachable(qc, q) &&
+                ChapterChain.Reachable(qc, q) && (q.Id != Q3Policy.QuestId || Q3Flow.Available(qc)) &&
+                (q.Id != Q4Policy.QuestId || Q4Flow.Available(qc)) &&
                 VisitEntryPolicy.NeedsVisit((int)q.QuestStatus, ReadyHandover(q, qc) != null);
             return false;
         }

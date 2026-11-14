@@ -17,7 +17,8 @@ internal static class Q2Policy
         ["e17_q2_ready"] = "q2Ready", ["e17_q2_instructions"] = "q2Brief",
         ["e17_q2_wait"] = "q2Wait", ["e17_q2_loss"] = "q2Replacement",
         ["e17_q2_report"] = "q2Reported", ["e17_q2_result"] = "q2Result",
-        ["e17_q2_cargo"] = "q2Cargo"
+        ["e17_q2_cargo"] = "q2Cargo", ["e17_q2_friend"] = "q2Friend",
+        ["e17_q2_remind"] = "q2RouteReminder", ["e17_q2_remind_reported"] = "q2ReportedReminder"
     };
 
     internal static bool Active(int status) => status is 2 or 3;
@@ -38,6 +39,7 @@ internal static class Q2Policy
             case "e17_q2_instructions": return status is 0 or 1 && !has("q2Brief");
             case "e17_q2_accepted": return status == 1 && has("q2Brief");
             case "e17_q2_report": return Active(status) && found && !placed && !has("q2Reported");
+            case "e17_q2_friend": return status != 4 && !found && !placed && has("q2Ready") && !has("q2Friend");
             case "e17_q2_remind": return Active(status) && !placed && !has("q2Reported");
             case "e17_q2_remind_reported": return Active(status) && !placed && has("q2Reported");
             case "e17_q2_replace": return status == 2 && !placed && !held && has("q2Received") && parcel == ParcelAvailability.Missing;
@@ -62,7 +64,7 @@ internal static class Q2Policy
                 ? E17Text.Get("tb5bb200262290b86") + "\n"
                 : E17Text.Get("ta57d3a6d7a9b4438") + "\n";
         if (found) return receipt +
-            E17Text.Get("t710bc093a124b0c0") + "\n" +
+            E17Text.Get("t4795bd6d5f8296b6") + "\n" +
             E17Text.Get("tc3c80380342a80a7");
         return receipt + E17Text.Get("td8fc3f24510c323b");
     }
@@ -71,24 +73,25 @@ internal static class Q2Policy
     {
         var p = new List<string>();
         if (Active(status) || status == 4)
-            p.Add(E17Text.Get("t5af03e135e56739a"));
+            p.Add(E17Text.Get("t434a01b428dafef5"));
         else if (has("q2Ready"))
-            p.Add(E17Text.Get("tb1e6e931f912d04c"));
+            p.Add(E17Text.Get("t4d02e4f97e01c7b5"));
         if (has("q2Brief"))
-            p.Add(E17Text.Get("t824735a8fc83d6e3"));
-        if (!placed && held && has("q2Received")) p.Add(E17Text.Get("t95c02a654c15d59b"));
+            p.Add(E17Text.Get("t460177262ee2aa55"));
+        if (!placed && held && has("q2Received")) p.Add(E17Text.Get(has("q2ReplacementReceived") ? "t5673e0516e3e60d4" : "t0eafa3245edae52d"));
+        if (has("q2Friend")) p.Add(E17Text.Get("t4764de4522598daf"));
         if (has("q2Wait")) p.Add(E17Text.Get("t0ab1529fe74e1dec"));
         if (has("q2Replacement")) p.Add(E17Text.Get("t5be10f7f5778fd55"));
-        if (placed) p.Add(E17Text.Get("t57cb6375dbb5030d"));
+        if (placed) p.Add(E17Text.Get("tfb4038b71f6eba41"));
         if (status == 4)
         {
             if (has("q2Result"))
             {
                 // The former uncertainty is superseded only by the actually shown confirmation.
                 if (placed) p.RemoveAt(p.Count - 1);
-                p.Add(E17Text.Get("t32fdc0cda0968207"));
+                p.Add(E17Text.Get("t7eeb6008ac61a6f0"));
             }
-            if (has("q2Cargo")) p.Add(E17Text.Get("t4be82eabef9b8c2e"));
+            if (has("q2Cargo")) p.Add(E17Text.Get("tc3ad27792471f4b7"));
             p.Add(E17Text.Get("t9e10d708827473ec"));
         }
         return p.Count == 0 ? "" : E17Text.Get("tb34d5a3647c1eb05") + string.Join("\n\n", p);

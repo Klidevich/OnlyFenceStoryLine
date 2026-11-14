@@ -24,7 +24,8 @@ internal static class NarrativeUI
             if (__instance.Quest?.Id != Plugin.ChapterId) return;
             // VisitAPI includes completed prerequisites and expanded history here.
             // Keep that history in Notes, not in the current objectives of E17.
-            __result = __result.Where(row => row.quest.QuestStatus != EQuestStatus.Success);
+            __result = __result.Where(row => row.quest.QuestStatus != EQuestStatus.Success &&
+                (!Plugin.Quests.Contains(row.quest.Id) || !row.quest.IsConditionDone(row.cond)));
         }
     }
     static readonly MenuStartDelay StartDelay = new();
@@ -59,6 +60,10 @@ internal static class NarrativeUI
             if (debrief.Length > 0) rows.Add(("e17-debrief-" + signature, debrief, q, new()));
             var delivery = Q2Flow.Journal(qc);
             if (delivery.Length > 0) rows.Add(("e17-q2-journal", delivery, Q2Flow.Quest(qc), new()));
+            var cargo = Q3Flow.Journal(qc);
+            if (cargo.Length > 0) rows.Add(("e17-q3-journal", cargo, Q3Flow.Quest(qc), new()));
+            var driver = Q4Flow.Journal(qc);
+            if (driver.Length > 0) rows.Add(("e17-q4-journal", driver, Q4Flow.Quest(qc), new()));
             __result = __result.Concat(rows);
         }
     }
@@ -75,10 +80,12 @@ internal static class NarrativeUI
             var qc = QuestOps.Resolve(); var q = VisitFlow.First(qc);
             var active = ch.Quest.Id == Plugin.ChapterId && q != null && q.QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish;
             var q2Text = ch.Quest.Id == Plugin.ChapterId ? Q2Flow.Objective(qc) : "";
-            if (!active && q2Text.Length == 0) { if (existing != null) existing.gameObject.SetActive(false); return; }
+            var q3Text = ch.Quest.Id == Plugin.ChapterId ? Q3Flow.Objective(qc) : "";
+            var q4Text = ch.Quest.Id == Plugin.ChapterId ? Q4Flow.Objective(qc) : "";
+            if (!active && q2Text.Length == 0 && q3Text.Length == 0 && q4Text.Length == 0) { if (existing != null) existing.gameObject.SetActive(false); return; }
             var text = active ? NarrativePolicy.Objective(true, Plugin.Found(q, NarrativePolicy.Ticket, qc.Profile), Plugin.Found(q, NarrativePolicy.Radio, qc.Profile),
                 VisitFlow.Held(qc, NarrativePolicy.Ticket), VisitFlow.Held(qc, NarrativePolicy.Radio),
-                VisitFlow.Given(q, NarrativePolicy.Ticket), VisitFlow.Given(q, NarrativePolicy.Radio)) : q2Text;
+                VisitFlow.Given(q, NarrativePolicy.Ticket), VisitFlow.Given(q, NarrativePolicy.Radio)) : q2Text.Length > 0 ? q2Text : q3Text.Length > 0 ? q3Text : q4Text;
             var label = existing != null ? existing.GetComponent<TextMeshProUGUI>() : null;
             if (label == null)
             {

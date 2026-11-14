@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>CustomQuests.E17.Server</AssemblyName>
-    <Version>0.1.2</Version>
+    <Version>0.1.6</Version>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <SptRuntime Condition="'$(SptRuntime)' == ''">C:\SPTNEW lilbit\SPT_Runtime</SptRuntime>
   </PropertyGroup>

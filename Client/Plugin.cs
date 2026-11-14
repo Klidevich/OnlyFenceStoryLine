@@ -15,7 +15,7 @@ using VisitAPI.ChapterUI;
 namespace CustomQuests.E17;
 
 // Client integration for the content included in this release.
-[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.1.2")]
+[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.1.6")]
 [BepInDependency("com.sora.visitapi")]
 public sealed class Plugin : BaseUnityPlugin
 {
@@ -24,13 +24,18 @@ public sealed class Plugin : BaseUnityPlugin
     internal const string ChapterId = "806248ae7f482f8beb294c88";
     internal static readonly HashSet<string> Quests = new()
     {
-        "c50c495eb5a978728eaf9d59", "b1e561de6727b0871dba91e9"
+        "c50c495eb5a978728eaf9d59", "b1e561de6727b0871dba91e9", Q3Policy.QuestId, Q4Policy.QuestId
     };
     internal static readonly Dictionary<string, string> ItemQuests = new()
     {
         ["582c4d5c43fdd55ee98b20bc"] = "c50c495eb5a978728eaf9d59",
         ["e208363938a46fbc1507af21"] = "c50c495eb5a978728eaf9d59",
-        ["90eb63a906ed4dff2fbbf0d8"] = "b1e561de6727b0871dba91e9"
+        ["90eb63a906ed4dff2fbbf0d8"] = "b1e561de6727b0871dba91e9",
+        [Q3Policy.Parts] = Q3Policy.QuestId,
+        [Q3Policy.Books] = Q3Policy.QuestId,
+        [Q4Policy.Claim] = Q4Policy.QuestId,
+        [Q4Policy.BusinessReply] = Q4Policy.QuestId,
+        [Q4Policy.PersonalCopy] = Q4Policy.QuestId
     };
     InventoryController watched;
     QuestController controller;
@@ -45,7 +50,7 @@ public sealed class Plugin : BaseUnityPlugin
         E17Text.Lookup = source => VisitAPI.Loc.Key(E17Text.Prefix + source) ?? source;
         harmony = new Harmony("com.klidevich.customquests.e17");
         harmony.PatchAll(typeof(Plugin).Assembly);
-        Logger.LogInfo("OnlyFenceStoryLine runtime 0.1.2 loaded; Russian, English and Korean localization.");
+        Logger.LogInfo("OnlyFenceStoryLine runtime 0.1.6 loaded; Russian, English and Korean localization.");
     }
 
     void OnDestroy()
@@ -53,6 +58,7 @@ public sealed class Plugin : BaseUnityPlugin
         VisitFlow.Clear();
         IntroController.Dispose();
         ParcelStatusSync.Dispose();
+        Q4Flow.Dispose();
         if (watched != null) watched.AddItemEvent -= OnAdded;
         harmony?.UnpatchSelf();
     }
@@ -85,6 +91,7 @@ public sealed class Plugin : BaseUnityPlugin
         }
         Refresh(qc);
         Q2Flow.Observe(qc);
+        Q4Flow.Observe(qc);
     }
 
     void OnAdded(AddItemEventArgs e)
@@ -99,7 +106,8 @@ public sealed class Plugin : BaseUnityPlugin
             var first = !Found(q, tpl, controller.Profile);
             Refresh(controller);
             if (first && Found(q, tpl, controller.Profile))
-                NotificationManager.DisplayMessageNotification((tpl + " Name").Localized() + E17Text.Get("t350b114ddc8c2ac9"));
+                NotificationManager.DisplayMessageNotification(tpl == Q3Policy.Books ? E17Text.Get("t2a67178db8d44853") :
+                    (tpl + " Name").Localized() + E17Text.Get("t350b114ddc8c2ac9"));
         }
         catch (Exception error) { Logger.LogError("E17 discovery event failed: " + error); }
     }
@@ -151,7 +159,7 @@ public sealed class Plugin : BaseUnityPlugin
     [HarmonyPatch(typeof(QuestOps), nameof(QuestOps.Finish))]
     static class KeepChapterOpen
     {
-        // These are the first three assignments, not the end of the E-17 story.
+        // These are the first four assignments, not the end of the E-17 story.
         static bool Prefix(Quest quest) => quest?.Id != ChapterId;
     }
 
@@ -229,28 +237,43 @@ public sealed class Plugin : BaseUnityPlugin
             }
             if (q.Id == "b1e561de6727b0871dba91e9" && condition is ConditionLeaveItemAtLocation)
                 __result = Found(q, "90eb63a906ed4dff2fbbf0d8", qc.Profile);
+            if (q.Id == Q4Policy.QuestId && condition is ConditionItem fourth)
+            {
+                var claimGiven = VisitFlow.Given(q, Q4Policy.Claim);
+                if (condition is ConditionLeaveItemAtLocation) __result = claimGiven;
+                else if (fourth.target.Contains(Q4Policy.BusinessReply))
+                    __result = Q4Flow.RepliesReady(qc) &&
+                        (condition is ConditionFindItem || Found(q, Q4Policy.BusinessReply, qc.Profile));
+                else if (fourth.target.Contains(Q4Policy.PersonalCopy))
+                    __result = Q4Flow.RepliesReady(qc) &&
+                        (Found(q, Q4Policy.BusinessReply, qc.Profile) || Found(q, Q4Policy.PersonalCopy, qc.Profile));
+            }
         }
     }
 
     [HarmonyPatch(typeof(GameWorld), nameof(GameWorld.SpawnLootItem))]
     static class RestoreLostFinds
     {
-        static void Prefix(JsonLootItem lootItem, Player questPlayer)
+        static bool Prefix(JsonLootItem lootItem, Player questPlayer)
         {
-            if (questPlayer == null || lootItem?.Item == null) return;
+            if (questPlayer == null || lootItem?.Item == null) return true;
             var tpl = lootItem.Item.StringTemplateId;
-            if (!ItemQuests.TryGetValue(tpl, out var questId)) return;
+            if (!ItemQuests.TryGetValue(tpl, out var questId)) return true;
             var q = questPlayer.QuestController?.Quests?.GetConditional(questId);
-            if (!Running(q)) return;
+            if (questId == Q4Policy.QuestId && (tpl == Q4Policy.BusinessReply || tpl == Q4Policy.PersonalCopy) &&
+                (!Running(q) || !Q4Flow.RepliesReady(questPlayer.QuestController))) return false;
+            if (!Running(q)) return true;
+            if (tpl == Q4Policy.PersonalCopy && Found(q, tpl, questPlayer.Profile)) return false;
             var inventory = questPlayer.Profile?.Inventory;
-            if (inventory == null || inventory.GetPlayerItems(EPlayerItems.QuestItems).Any(i => i.StringTemplateId == tpl)) return;
+            if (inventory == null || inventory.GetPlayerItems(EPlayerItems.QuestItems).Any(i => i.StringTemplateId == tpl)) return true;
             // The workshop note is not handed in; after discovery its text is sufficient.
-            if (tpl == "90eb63a906ed4dff2fbbf0d8" && Found(q, tpl, questPlayer.Profile)) return;
+            if ((tpl == "90eb63a906ed4dff2fbbf0d8" || tpl == Q4Policy.PersonalCopy) && Found(q, tpl, questPlayer.Profile)) return true;
             if (q.GetConditions<ConditionHandoverItem>(EQuestStatus.AvailableForFinish)
-                .Any(c => c.target.Contains(tpl) && q.IsConditionDone(c))) return;
+                .Any(c => c.target.Contains(tpl) && q.IsConditionDone(c))) return true;
             MongoID me = questPlayer.ProfileId;
             if (lootItem.ValidProfiles == null) lootItem.ValidProfiles = new[] { me };
             else if (!lootItem.ValidProfiles.Contains(me)) lootItem.ValidProfiles = lootItem.ValidProfiles.Concat(new[] { me }).ToArray();
+            return true;
         }
     }
 }

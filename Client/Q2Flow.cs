@@ -27,7 +27,7 @@ internal static class Q2Flow
     internal static bool Found(QuestController qc) => Quest(qc) is Quest q && qc.Profile != null && Plugin.Found(q, Q2Policy.Note, qc.Profile);
     static int Status(QuestController qc) => (int?)Quest(qc)?.QuestStatus ?? 0;
     internal static string Entry(QuestController qc) => Q2Policy.Entry(Status(qc), Placed(Quest(qc)), f => VisitFlow.Has(qc, f));
-    internal static bool Question(string target) => target is "e17_q2_wait" or "e17_q2_loss" or "e17_q2_remind" or "e17_q2_remind_reported";
+    internal static bool Question(string target) => target is "e17_q2_wait" or "e17_q2_loss" or "e17_q2_friend" or "e17_q2_remind" or "e17_q2_remind_reported";
     internal static bool Allowed(DialogOption option, QuestController qc)
     {
         var status = Status(qc); var placed = Placed(Quest(qc));
@@ -49,6 +49,7 @@ internal static class Q2Flow
     {
         if (option.Target is not ("e17_q2_replace" or "e17_q2_missing")) return true;
         if (!QuestOps.IsLobby(qc) || !QuestOps.IsLive(qc) || !Allowed(option, qc)) return false;
+        if (option.Target == "e17_q2_replace") VisitFlow.Mark(qc, "q2ReplacementRequested");
         ParcelStatusSync.Replace(qc);
         return true;
     }
@@ -60,6 +61,8 @@ internal static class Q2Flow
         if (changedController) { watched = qc; wasHeld = held; wasPlaced = placed; }
         if (q != null && Q2Policy.Active((int)q.QuestStatus))
         {
+            if (held && !placed && VisitFlow.Has(qc, "q2ReplacementRequested"))
+                VisitFlow.Mark(qc, "q2ReplacementReceived");
             // Existing owned items are legitimate receipt evidence; acceptance and mail are not.
             if (held && !placed && (!wasHeld || !VisitFlow.Has(qc, "q2Received")))
             {
