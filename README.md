@@ -4,6 +4,8 @@ A mod for **SPT 4.1.6**. **VisitAPI 1.3.7 is required** (client and server).
 
 **Alpha 0.1.2 · English, Russian and Korean localization**
 
+**[Download Alpha 0.1.2 (ZIP)](https://github.com/Klidevich/OnlyFenceStoryLine/releases/download/v0.1.2/OnlyFenceStoryLine-0.1.2-SPT-4.1.6.zip)** · [Release notes](https://github.com/Klidevich/OnlyFenceStoryLine/releases/tag/v0.1.2)
+
 **A new SPT profile is required for this alpha. Do not use an existing profile.**
 
 ![Fence visit](https://raw.githubusercontent.com/Klidevich/OnlyFenceStoryLine/main/image.png)
