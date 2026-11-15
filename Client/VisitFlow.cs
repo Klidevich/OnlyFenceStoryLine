@@ -28,7 +28,7 @@ internal static class VisitFlow
         typeof(DialogTemplateBuilder), "Id", new[] { typeof(string), typeof(string) }).CreateDelegate(typeof(Func<string, string, MongoID>));
     static readonly FieldInfo WindowController = AccessTools.Field(typeof(TraderDialogWindow), "_dialogController");
     static readonly Dictionary<MongoID, (string node, DialogOption option)> options = new();
-    static readonly HashSet<string> extra = new() { "e17_ours", "e17_archive", "e17_books", "e17_route", "e17_workshop", "e17_cargo" };
+    static readonly HashSet<string> extra = new() { "e17_recap", "e17_ours", "e17_archive", "e17_books", "e17_route", "e17_workshop", "e17_cargo" };
 
     internal static void Clear() { dialog = null; quests = null; tree = null; options.Clear(); returnNode = "e17_root"; }
     internal static void RefreshParcelChoices()
@@ -86,7 +86,7 @@ internal static class VisitFlow
         if (!Q3Flow.Allowed(option, qc)) return false;
         if (!Q4Flow.Allowed(option, qc)) return false;
         if (option.AcceptIds.Contains(VisitEntryPolicy.FirstQuestId) && !Q1FlowPolicy.CanAccept(key => Has(qc, key))) return false;
-        if (target == "e17_resume") return !Q1FlowPolicy.CanAccept(key => Has(qc, key));
+        if (target == "e17_resume") return VisitEntryPolicy.NeedsBriefing((int?)q?.QuestStatus ?? 0) && !Q1FlowPolicy.CanAccept(key => Has(qc, key));
         if (target == "e17_offer") return q?.QuestStatus == EQuestStatus.AvailableForStart && Q1FlowPolicy.CanAccept(key => Has(qc, key));
         if (target?.StartsWith("e17_active_", StringComparison.Ordinal) == true)
             return q != null && q.QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish &&
@@ -101,7 +101,7 @@ internal static class VisitFlow
         if (target is "e17_q2_entry" or "e17_q2_continue")
         {
             var q2 = Q2Flow.Quest(qc);
-            var begun = Has(qc, "q2Ready") || q2?.QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish or EQuestStatus.Success;
+            var begun = Has(qc, "q2Ready") || Has(qc, "q2ReadyVoice") || q2?.QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish or EQuestStatus.Success;
             return q?.QuestStatus == EQuestStatus.Success && Has(qc, "finished") && q2 != null &&
                 (target == "e17_q2_continue" ? begun : !begun);
         }
@@ -120,7 +120,7 @@ internal static class VisitFlow
             return (target == "e17_done_ready") == NarrativePolicy.Preparing(key => Has(qc, key));
         }
         if (target == "e17_ours") return Has(qc, "rescue");
-        if (target is "e17_archive" or "e17_books") return Has(qc, "booksKnown") || Has(qc, "books");
+        if (target is "e17_archive" or "e17_books") return Q1FlowPolicy.BooksKnown(key => Has(qc, key)) || Has(qc, "booksKnown") || Has(qc, "books");
         if (target == "e17_route") return Has(qc, "route");
         if (target is "e17_workshop" or "e17_cargo") return Has(qc, "radioFirst") || Has(qc, "radioSecond");
         return true;
@@ -163,7 +163,7 @@ internal static class VisitFlow
                 if (!Has(quests, "finished")) forceNode = NarrativePolicy.Preparing(key => Has(quests, key)) ? "e17_done_ready" : "e17_done_new";
                 else if (Q4Flow.Available(quests) && Q4Flow.Begun(quests)) forceNode = Q4Flow.Entry(quests);
                 else if (Q3Flow.Available(quests) && Q3Flow.Begun(quests)) forceNode = Q3Flow.Entry(quests);
-                else if (Q2Flow.Quest(quests) != null && (Has(quests, "q2Ready") || Q2Flow.Quest(quests).QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish or EQuestStatus.Success))
+                else if (Q2Flow.Quest(quests) != null && (Has(quests, "q2Ready") || Has(quests, "q2ReadyVoice") || Q2Flow.Quest(quests).QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish or EQuestStatus.Success))
                     forceNode = Q2Flow.Entry(quests);
             }
         }
@@ -206,6 +206,7 @@ internal static class VisitFlow
                 node.StartsWith("e17_radio_") && !Given(q, NarrativePolicy.Radio) ||
                 fact == "finished" && q?.QuestStatus != EQuestStatus.Success) return;
             marked |= Mark(quests, fact);
+            if (node is "e17_radio_first" or "e17_radio_second") marked |= Mark(quests, "q1RadioVoice");
             if (marked) Plugin.Instance.StartCoroutine(RefreshChoices(VisitFlow.dialog, dialog));
         }
     }

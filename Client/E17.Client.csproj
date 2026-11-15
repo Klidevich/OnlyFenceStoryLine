@@ -3,8 +3,8 @@
     <TargetFramework>net472</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AssemblyName>CustomQuests.E17</AssemblyName>
-    <Version>0.1.6</Version>
-    <GamePath Condition="'$(GamePath)' == ''">C:\SPTNEW lilbit</GamePath>
+    <Version>0.1.7</Version>
+    <GamePath Condition="'$(GamePath)' == ''">D:\SPTNEW lilbit</GamePath>
     <Managed>$(GamePath)\EscapeFromTarkov_Data\Managed</Managed>
   </PropertyGroup>
   <ItemGroup>

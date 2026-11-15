@@ -30,7 +30,7 @@ public static class ProgressPolicy
         , "q2Ready", "q2Brief", "q2Wait", "q2Replacement", "q2Reported", "q2Result", "q2Cargo", "q2Received"
         , "q3Rudin", "q3Name", "q3Brief", "q3Weight", "q3PartsAcknowledged", "q3BooksAcknowledged",
         "q3PaidShown", "q3Payment", "q3Ransom", "q3Expenses", "q3Condition",
-        "intro3_rescue", "intro3_delivery", "intro3_van", "q2Friend", "q1RouteReminder", "q2RouteReminder", "q2ReportedReminder",
+        "intro3_rescue", "intro3_delivery", "intro3_van", "intro4_closed", "intro4_company", "q1RadioVoice", "q2ReadyVoice", "q4ReadyVoice", "q2Friend", "q1RouteReminder", "q2RouteReminder", "q2ReportedReminder",
         "q2ReplacementRequested", "q2ReplacementReceived",
         "q4Ready", "q4Brief", "q4Wait", "q4ClaimAcknowledged", "q4Debt", "q4BusinessAcknowledged", "q4PaidShown", "q4Received"
     };

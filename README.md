@@ -2,9 +2,9 @@
 
 A mod for **SPT 4.1.6**. **VisitAPI 1.3.7 is required** (client and server).
 
-**Alpha 0.1.6 · English, Russian and Korean localization**
+**Alpha 0.1.7 · English, Russian and Korean localization**
 
-**[Download Alpha 0.1.6 (ZIP)](https://github.com/Klidevich/OnlyFenceStoryLine/releases/download/v0.1.6/OnlyFenceStoryLine-0.1.6-SPT-4.1.6.zip)** · [Release notes](https://github.com/Klidevich/OnlyFenceStoryLine/releases/tag/v0.1.6)
+**[Download Alpha 0.1.7 (ZIP)](https://github.com/Klidevich/OnlyFenceStoryLine/releases/download/v0.1.7/OnlyFenceStoryLine-0.1.7-SPT-4.1.6.zip)** · [Release notes](https://github.com/Klidevich/OnlyFenceStoryLine/releases/tag/v0.1.7)
 
 **A new SPT profile is required for this alpha. Do not use an existing profile.**
 
@@ -22,7 +22,7 @@ The release includes the room resources used by this mod. Installing the entire 
 
 1. Close the game and SPT server. Back up your profile and any existing files this mod replaces.
 2. Install the required VisitAPI client and server components.
-3. Download `OnlyFenceStoryLine-0.1.6-SPT-4.1.6.zip` from [Releases](https://github.com/Klidevich/OnlyFenceStoryLine/releases).
+3. Download `OnlyFenceStoryLine-0.1.7-SPT-4.1.6.zip` from [Releases](https://github.com/Klidevich/OnlyFenceStoryLine/releases).
 4. Extract the archive into your SPT installation folder, alongside `EscapeFromTarkov.exe`.
 5. Start the SPT server. Create and select a **new profile** in the SPT Launcher, then start the game and create your character.
 

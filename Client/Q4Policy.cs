@@ -21,12 +21,13 @@ internal static class Q4Policy
     internal const string Placement = "59f3ea45693024d45ed3f928";
     internal static readonly Dictionary<string, string> Facts = new()
     {
-        ["e17_q4_ready"] = "q4Ready", ["e17_q4_instructions"] = "q4Brief",
+        ["e17_q4_ready"] = "q4ReadyVoice", ["e17_q4_instructions"] = "q4Brief",
         ["e17_q4_wait"] = "q4Wait", ["e17_q4_claim"] = "q4ClaimAcknowledged",
         ["e17_q4_debt"] = "q4Debt", ["e17_q4_business"] = "q4BusinessAcknowledged",
         ["e17_q4_paid"] = "q4PaidShown"
     };
     internal static bool Active(int status) => status is 2 or 3;
+    internal static bool Briefed(Func<string, bool> has) => has("q4ReadyVoice") || has("q4Brief");
     internal static bool Available(int previousStatus, Func<string, bool> has) => previousStatus == 4 && has("q3Expenses");
     internal static string Entry(Q4State s, Func<string, bool> has)
     {
@@ -37,7 +38,7 @@ internal static class Q4Policy
             if (s.BusinessGiven && !has("q4BusinessAcknowledged")) return "e17_q4_business";
             return "e17_q4_active";
         }
-        return has("q4Brief") ? "e17_q4_offer" : has("q4Ready") ? "e17_q4_resume" : "e17_q4_ready";
+        return Briefed(has) ? "e17_q4_offer" : has("q4Ready") ? "e17_q4_instructions" : "e17_q4_ready";
     }
     internal static bool Allowed(string target, Q4State s, Func<string, bool> has)
     {
@@ -46,9 +47,9 @@ internal static class Q4Policy
         switch (target)
         {
             case "e17_q4_ready": return s.Status is 0 or 1;
-            case "e17_q4_instructions": return s.Status is 0 or 1 && has("q4Ready");
-            case "e17_q4_accepted": return s.Status == 1 && has("q4Brief");
-            case "e17_q4_wait": return s.Status != 4 && has("q4Ready");
+            case "e17_q4_instructions": return s.Status is 0 or 1 && has("q4Ready") && !Briefed(has);
+            case "e17_q4_accepted": return s.Status == 1 && Briefed(has);
+            case "e17_q4_wait": return s.Status != 4 && (has("q4Ready") || Briefed(has));
             case "e17_q4_claim": return s.Status == 2 && !s.ClaimGiven && s.ClaimHeld;
             case "e17_q4_debt": return Active(s.Status) && s.ClaimGiven;
             case "e17_q4_issue": return s.Status == 2 && s.ClaimGiven && !s.Placed && !s.RequestHeld &&
@@ -83,23 +84,24 @@ internal static class Q4Policy
         if (!s.RepliesReady) return E17Text.Get("t0d9e0d52f57c11d1");
         if (s.BusinessGiven && s.PersonalFound) return E17Text.Get("tc4921eb7909d2fad");
         var p = new List<string>();
-        if (!s.BusinessGiven) p.Add(s.BusinessHeld ? E17Text.Get("t344364d38d0a2537") : s.BusinessFound ? E17Text.Get("t1afe6b9a0f7e4576") : E17Text.Get("td42196451d5a9aae"));
+        if (!s.BusinessGiven) p.Add(s.BusinessHeld ? E17Text.Get("t344364d38d0a2537") : s.BusinessFound ? E17Text.Get("t1afe6b9a0f7e4576") : s.PersonalFound ? E17Text.Get("ta774863680675e2e") : E17Text.Get("td42196451d5a9aae"));
         if (!s.PersonalFound && (s.BusinessFound || s.BusinessGiven)) p.Add(E17Text.Get("t68c5ea12c3181c74"));
         return string.Join("\n", p);
     }
     internal static string Journal(Q4State s, Func<string, bool> has)
     {
         var p = new List<string>();
-        if (has("q4Ready")) p.Add(E17Text.Get("t3aa47d681cefaf4f"));
+        if (has("q4Ready") || Briefed(has)) p.Add(E17Text.Get("t3aa47d681cefaf4f"));
         if (has("q4Wait")) p.Add(E17Text.Get("t9221f4a8e3387980"));
         if (Active(s.Status) || s.Status == 4) p.Add(E17Text.Get("taa387c4a110f7918"));
-        if (s.ClaimFound || s.ClaimGiven) p.Add(E17Text.Get("t8608f0c18890ab4f"));
+        if (s.ClaimFound && !s.ClaimGiven) p.Add(E17Text.Get("t8608f0c18890ab4f"));
         if (s.ClaimGiven) p.Add(E17Text.Get("t2da20b03d904b874"));
         if (has("q4ClaimAcknowledged")) p.Add(E17Text.Get("t4c6742acb887f687"));
         if (has("q4Debt")) p.Add(E17Text.Get("t7331057ea863e678"));
         if (has("q4Received") || s.Placed) p.Add(E17Text.Get("t6825e8797d74aa8b") + "\n\n" + E17Text.Get("t9a2ead36b2b6d05b"));
-        if (s.Placed) p.Add(E17Text.Get("t0d9e0d52f57c11d1"));
-        if (s.BusinessFound || s.BusinessGiven) p.Add(E17Text.Get("t7f525b9a9c24794d"));
+        if (s.Placed) p.Add(E17Text.Get("t9795c5e2feb72b51"));
+        if (s.BusinessFound && !s.BusinessGiven) p.Add(E17Text.Get("t7f525b9a9c24794d"));
+        if ((s.BusinessFound || s.BusinessGiven) && !s.PersonalFound) p.Add(E17Text.Get("teee23fb91b5b214c"));
         if (s.PersonalFound) p.Add(E17Text.Get("tb3f6f0b202adf8c4"));
         if (s.BusinessGiven) p.Add(E17Text.Get("t2fe06fc1b41d6526"));
         if (s.Status == 4)

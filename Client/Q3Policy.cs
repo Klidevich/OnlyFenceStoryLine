@@ -20,7 +20,7 @@ internal static class Q3Policy
     };
     internal static bool Active(int status) => status is 2 or 3;
     internal static bool Available(int previousStatus, Func<string, bool> has) =>
-        previousStatus == 4 && has("q2Result") && has("q2Cargo");
+        previousStatus == 4 && has("q2Result");
     internal static bool ContextAllows(string target, bool booksFound, bool booksGiven, int status, bool begun, bool available)
     {
         // Previously unanswered topics can become obsolete through actual quest progress.
@@ -36,7 +36,7 @@ internal static class Q3Policy
     internal static string Entry(int status, bool partsGiven, bool booksGiven, Func<string, bool> has)
     {
         if (status == 4)
-            return !has("q3PaidShown") ? "e17_q3_paid" : !has("q3Payment") ? "e17_q3_paid_resume" :
+            return !has("q3PaidShown") ? "e17_q3_paid" : !has("q3Ransom") && !has("q3Payment") ? "e17_q3_paid_resume" :
                 !has("q3Ransom") ? "e17_q3_payment_resume" : !has("q3Expenses") ? "e17_q3_ransom_resume" : "e17_q3_after";
         if (Active(status))
         {
@@ -62,8 +62,9 @@ internal static class Q3Policy
             case "e17_q3_weight": return false;
             case "e17_q3_condition": return status is 0 or 1 or 2 && !booksGiven && has("q3Brief");
             case "e17_q3_paid": return status == 3 && partsGiven && booksGiven;
-            case "e17_q3_payment": return status == 4 && has("q3PaidShown");
-            case "e17_q3_ransom": return status == 4 && has("q3Payment");
+            // The old acknowledgement remains a stored fact; the new dialogue goes straight to the ransom answer.
+            case "e17_q3_payment": return false;
+            case "e17_q3_ransom": return status == 4 && has("q3PaidShown");
             case "e17_q3_expenses": return status == 4 && has("q3Ransom");
         }
         if (target.StartsWith("e17_q3_active_", StringComparison.Ordinal))
@@ -81,8 +82,8 @@ internal static class Q3Policy
         if (fact == "q3PartsAcknowledged") return partsGiven;
         if (fact == "q3BooksAcknowledged") return booksGiven;
         if (fact == "q3PaidShown") return status == 4;
-        if (fact == "q3Payment") return status == 4 && has("q3PaidShown");
-        if (fact == "q3Ransom") return status == 4 && has("q3Payment");
+        if (fact == "q3Payment") return false;
+        if (fact == "q3Ransom") return status == 4 && has("q3PaidShown");
         if (fact == "q3Expenses") return status == 4 && has("q3Ransom");
         return true;
     }

@@ -4,9 +4,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>CustomQuests.E17.Server</AssemblyName>
-    <Version>0.1.6</Version>
+    <Version>0.1.7</Version>
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <SptRuntime Condition="'$(SptRuntime)' == ''">C:\SPTNEW lilbit\SPT_Runtime</SptRuntime>
+    <SptRuntime Condition="'$(SptRuntime)' == ''">D:\SPTNEW lilbit\SPT_Runtime</SptRuntime>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

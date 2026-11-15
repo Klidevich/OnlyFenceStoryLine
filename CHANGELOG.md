@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+Narrative changes.
+
 ## 0.1.6
 
 Changed narrative; fixed quest items placement.

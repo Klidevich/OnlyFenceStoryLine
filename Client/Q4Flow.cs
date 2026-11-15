@@ -35,7 +35,7 @@ internal static class Q4Flow
         };
     }
     internal static bool Available(QuestController qc) => Q4Policy.Available((int?)Q3Flow.Quest(qc)?.QuestStatus ?? 0, f => VisitFlow.Has(qc, f));
-    internal static bool Begun(QuestController qc) => VisitFlow.Has(qc, "q4Ready") || (int?)Quest(qc)?.QuestStatus is 2 or 3 or 4;
+    internal static bool Begun(QuestController qc) => VisitFlow.Has(qc, "q4Ready") || Q4Policy.Briefed(f => VisitFlow.Has(qc, f)) || (int?)Quest(qc)?.QuestStatus is 2 or 3 or 4;
     internal static string Entry(QuestController qc) => Available(qc) ? Q4Policy.Entry(State(qc), f => VisitFlow.Has(qc, f)) : Q3Flow.Entry(qc);
     internal static bool Question(string target) => target is "e17_q4_wait" or "e17_q4_debt";
     internal static bool Allowed(DialogOption option, QuestController qc)
@@ -45,7 +45,7 @@ internal static class Q4Flow
             !option.AcceptIds.Contains(Q4Policy.QuestId) && !option.CompleteIds.Contains(Q4Policy.QuestId) && option.HandoverId != Q4Policy.QuestId) return true;
         if (!Available(qc) || Quest(qc) == null) return false;
         var s = State(qc);
-        if (option.AcceptIds.Contains(Q4Policy.QuestId) && (s.Status != 1 || !VisitFlow.Has(qc, "q4Brief"))) return false;
+        if (option.AcceptIds.Contains(Q4Policy.QuestId) && !Q4Policy.Allowed("e17_q4_accepted", s, f => VisitFlow.Has(qc, f))) return false;
         if (option.CompleteIds.Contains(Q4Policy.QuestId) && !Q4Policy.Allowed("e17_q4_paid", s, f => VisitFlow.Has(qc, f))) return false;
         if (option.Target is "e17_q4_entry" or "e17_q4_continue") return option.Target == "e17_q4_continue" ? Begun(qc) : !Begun(qc);
         return Q4Policy.Allowed(option.Target, s, f => VisitFlow.Has(qc, f));

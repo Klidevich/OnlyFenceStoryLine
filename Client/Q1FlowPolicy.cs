@@ -6,10 +6,7 @@ namespace CustomQuests.E17;
 // Conversation progress is independent of quest acceptance and of legacy journal facts.
 internal static class Q1FlowPolicy
 {
-    internal static readonly string[] Stages =
-    {
-        "rescue", "closed", "act", "company", "delivery", "van"
-    };
+    internal static readonly string[] Stages = { "rescue", "closed", "company", "van" };
 
     internal static string? StageFact(string node)
     {
@@ -18,14 +15,14 @@ internal static class Q1FlowPolicy
         return null;
     }
 
-    static string Fact(string stage) =>
-        stage is "rescue" or "delivery" or "van" ? "intro3_" + stage : "intro2_" + stage;
+    static string Fact(string stage) => stage is "closed" or "company" ? "intro4_" + stage : "intro3_" + stage;
 
-    // Old partial conversations only satisfy a merged answer when all its earlier pieces were shown.
+    // A legacy split answer satisfies a merged block only when every earlier piece was shown.
     internal static bool Seen(string stage, Func<string, bool> has) => has(Fact(stage)) || stage switch
     {
         "rescue" => has("intro2_rescue") && has("intro2_bill"),
-        "delivery" => has("intro2_delivery") && has("intro2_briefed"),
+        "closed" => has("intro2_closed") && has("intro2_act"),
+        "company" => has("intro2_company") && (has("intro3_delivery") || has("intro2_delivery") && has("intro2_briefed")),
         "van" => has("intro2_van") && has("intro2_briefed"),
         _ => false
     };
@@ -41,6 +38,13 @@ internal static class Q1FlowPolicy
     {
         foreach (var stage in Stages) if (!Seen(stage, has)) return false;
         return true;
+    }
+
+    internal static bool BooksKnown(Func<string, bool> has) => has("intro4_closed") || has("booksKnown") || has("books");
+    internal static bool HasReview(Func<string, bool> has)
+    {
+        foreach (var stage in Stages) if (Seen(stage, has)) return true;
+        return false;
     }
 
     internal static string ActiveEntry(bool ticketGiven, bool radioGiven) =>
