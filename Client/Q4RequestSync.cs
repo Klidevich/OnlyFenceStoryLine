@@ -63,6 +63,7 @@ internal static class Q4RequestSync
                 {
                     var data = JObject.Parse(raw)["data"];
                     if ((string)data?["profileId"] != captured.Profile.Id) return false;
+                    Q4ActionSync.Mirror(captured, data);
                     if (data?["repliesReady"]?.Value<bool>() == true && !VisitFlow.Has(captured, "q4ReplyReady"))
                     {
                         // Server-owned raid proof: never send this through ProgressSync.

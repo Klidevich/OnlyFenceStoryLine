@@ -10,8 +10,7 @@ internal static class DialogueText
     // authored line breaks after parsing, before both native text and history are built.
     internal static void Prepare(DialogTree tree)
     {
-        if (tree?.TraderId != "579dc571d53a0658a154fbec" ||
-            !tree.Nodes.ContainsKey("e17_intro") || !tree.Nodes.ContainsKey("e17_root")) return;
+        if (tree == null || !LatePolicy.Traders.Values.Contains(tree.TraderId) || !tree.Nodes.ContainsKey("e17_root")) return;
         foreach (var node in tree.Nodes.Values)
         {
             node.NpcText = Decode(node.NpcText);
@@ -29,7 +28,8 @@ internal static class DialogueText
         }
     }
 
-    static string Decode(string text) => text?.Replace("\\r\\n", "\n").Replace("\\n", "\n");
+    static string Decode(string text) => text?.Replace("\\r\\n", "\n").Replace("\\n", "\n")
+        .Replace(/* release-text:Client.DialogueText.2 */ "", "{playerName}").Replace(/* release-text:Client.DialogueText.1 */ "", "{playerName}").Replace(/* release-text:Client.DialogueText.0 */ "", "{playerName}");
     static void Translate(Dictionary<string, string> translations)
     {
         foreach (var key in translations.Keys.ToArray()) translations[key] = Decode(translations[key]);

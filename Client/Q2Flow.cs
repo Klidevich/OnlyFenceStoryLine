@@ -26,25 +26,31 @@ internal static class Q2Flow
         q.GetConditions<ConditionLeaveItemAtLocation>(EQuestStatus.AvailableForFinish).Any(q.IsConditionDone));
     internal static bool Found(QuestController qc) => Quest(qc) is Quest q && qc.Profile != null && Plugin.Found(q, Q2Policy.Note, qc.Profile);
     static int Status(QuestController qc) => (int?)Quest(qc)?.QuestStatus ?? 0;
+    internal static bool ReadyReport(QuestController qc) =>
+        VisitFlow.First(qc)?.QuestStatus == EQuestStatus.Success && VisitFlow.Has(qc, "q1RadioV018") &&
+        Q2Policy.ReadyReport(Status(qc), Found(qc), Placed(Quest(qc)), f => VisitFlow.Has(qc, f));
     internal static string Entry(QuestController qc) => Q2Policy.Entry(Status(qc), Placed(Quest(qc)), f => VisitFlow.Has(qc, f));
-    internal static bool Question(string target) => target is "e17_q2_wait" or "e17_q2_loss" or "e17_q2_friend" or "e17_q2_remind" or "e17_q2_remind_reported";
+    internal static bool Question(string target) => target is "e17_q2_wait" or "e17_q2_loss" or "e17_q2_friend" or "e17_q2_remind" or "e17_q2_remind_reported" or "e17_q2_workshop" or "e17_q2_archive_workshop" or "e17_q2_archive_arrival" or "e17_q2_archive_cargo";
     internal static bool Allowed(DialogOption option, QuestController qc)
     {
         var status = Status(qc); var placed = Placed(Quest(qc));
-        if (option.Target is "e17_workshop") return !Found(qc) && status != 4;
-        if (option.Target is "e17_cargo") return !VisitFlow.Has(qc, "q2Cargo");
+        if (!Q2Policy.ContextAllows(option.Target, status, Found(qc), f => VisitFlow.Has(qc, f))) return false;
+        if (option.Target is "e17_workshop" or "e17_cargo") return true;
         if (option.Target?.StartsWith("e17_q2_", StringComparison.Ordinal) != true) return true;
-        if (VisitFlow.First(qc)?.QuestStatus != EQuestStatus.Success || Quest(qc) == null) return false;
+        if (VisitFlow.First(qc)?.QuestStatus != EQuestStatus.Success || Quest(qc) == null || !VisitFlow.Has(qc, "q1RadioV018")) return false;
         return Q2Policy.Allowed(option.Target, status, Found(qc), placed, VisitFlow.Held(qc, Q2Policy.Parcel),
             f => VisitFlow.Has(qc, f), ParcelStatusSync.State(qc));
     }
     internal static bool Shown(string node, QuestController qc)
     {
         if (!Q2Policy.Facts.TryGetValue(node, out var fact)) return false;
-        if ((fact == "q2Result" || fact == "q2Cargo") && Status(qc) != 4) return false;
+        if ((fact == "q2ResultV018" || fact == "q2CargoV018") && Status(qc) != 4) return false;
         if (fact == "q2Reported" && !Found(qc)) return false;
         return VisitFlow.Mark(qc, fact);
     }
+    // Called only after the full note text has actually been painted, never on pickup.
+    internal static bool ReadNote(QuestController qc) => Q2Policy.CanReadNote(Found(qc), f => VisitFlow.Has(qc, f)) &&
+        VisitFlow.Mark(qc, Q2Policy.NoteReadFact);
     internal static bool Chosen(DialogOption option, QuestController qc)
     {
         if (option.Target is not ("e17_q2_replace" or "e17_q2_missing")) return true;

@@ -44,6 +44,14 @@ internal static class Q3Flow
         return Available(qc) && Q3Policy.CanRecord(node, Status(qc), VisitFlow.Given(q, Q3Policy.Parts), VisitFlow.Given(q, Q3Policy.Books),
             f => VisitFlow.Has(qc, f)) && VisitFlow.Mark(qc, Q3Policy.Facts[node]);
     }
+    // The caller must have displayed the full document (item, chapter materials, or A04 document panel).
+    internal static bool ReadBooks(QuestController qc)
+    {
+        var q = Quest(qc);
+        var available = q != null && (Plugin.Found(q, Q3Policy.Books, qc.Profile) ||
+            VisitFlow.Given(q, Q3Policy.Books) || q.QuestStatus == EQuestStatus.Success);
+        return Q3Policy.CanReadBooks(available, f => VisitFlow.Has(qc, f)) && VisitFlow.Mark(qc, Q3Policy.BooksReadFact);
+    }
     internal static string Journal(QuestController qc)
     {
         var q = Quest(qc);

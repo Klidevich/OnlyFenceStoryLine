@@ -64,6 +64,7 @@ internal static class NarrativeUI
             if (cargo.Length > 0) rows.Add(("e17-q3-journal", cargo, Q3Flow.Quest(qc), new()));
             var driver = Q4Flow.Journal(qc);
             if (driver.Length > 0) rows.Add(("e17-q4-journal", driver, Q4Flow.Quest(qc), new()));
+            foreach (var row in LateFlow.Journal(qc)) rows.Add((row.key, row.text, row.quest, new()));
             __result = __result.Concat(rows);
         }
     }
@@ -79,13 +80,15 @@ internal static class NarrativeUI
             var existing = parent.Find("E17CurrentObjective");
             var qc = QuestOps.Resolve(); var q = VisitFlow.First(qc);
             var active = ch.Quest.Id == Plugin.ChapterId && q != null && q.QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish;
+            LateNavigation.BindButton(qc, parent, list._conditionsViewTemplate?._dialogButtonsContainer?._visitTraderButton, ch.Quest.Id == Plugin.ChapterId);
             var q2Text = ch.Quest.Id == Plugin.ChapterId ? Q2Flow.Objective(qc) : "";
             var q3Text = ch.Quest.Id == Plugin.ChapterId ? Q3Flow.Objective(qc) : "";
             var q4Text = ch.Quest.Id == Plugin.ChapterId ? Q4Flow.Objective(qc) : "";
-            if (!active && q2Text.Length == 0 && q3Text.Length == 0 && q4Text.Length == 0) { if (existing != null) existing.gameObject.SetActive(false); return; }
+            var lateText = ch.Quest.Id == Plugin.ChapterId ? LateFlow.Objective(qc) : "";
+            if (!active && q2Text.Length == 0 && q3Text.Length == 0 && q4Text.Length == 0 && lateText.Length == 0) { if (existing != null) existing.gameObject.SetActive(false); return; }
             var text = active ? NarrativePolicy.Objective(true, Plugin.Found(q, NarrativePolicy.Ticket, qc.Profile), Plugin.Found(q, NarrativePolicy.Radio, qc.Profile),
                 VisitFlow.Held(qc, NarrativePolicy.Ticket), VisitFlow.Held(qc, NarrativePolicy.Radio),
-                VisitFlow.Given(q, NarrativePolicy.Ticket), VisitFlow.Given(q, NarrativePolicy.Radio)) : q2Text.Length > 0 ? q2Text : q3Text.Length > 0 ? q3Text : q4Text;
+                VisitFlow.Given(q, NarrativePolicy.Ticket), VisitFlow.Given(q, NarrativePolicy.Radio)) : q2Text.Length > 0 ? q2Text : q3Text.Length > 0 ? q3Text : q4Text.Length > 0 ? q4Text : lateText;
             var label = existing != null ? existing.GetComponent<TextMeshProUGUI>() : null;
             if (label == null)
             {

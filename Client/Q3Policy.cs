@@ -9,6 +9,10 @@ internal static class Q3Policy
     internal const string QuestId = "b700d4655d89afabc28d305e";
     internal const string Parts = "0c3a4c5190db312c73d4fbba";
     internal const string Books = "e0e3f1bcb6345d8e8434e53c";
+    internal const string BooksReadFact = "q3BooksReadV022";
+    internal static bool CanReadBooks(bool available, Func<string, bool> has) => available && !has(BooksReadFact);
+    internal static bool ShowsBook(string node) => node is "e17_q3_paid" or "e17_q3_paid_resume" or
+        "e17_q3_payment_resume" or "e17_q3_ransom_resume";
     internal static readonly Dictionary<string, string> Facts = new()
     {
         ["e17_q3_ready"] = "q3Rudin",
@@ -16,11 +20,11 @@ internal static class Q3Policy
         ["e17_q3_parts_first"] = "q3PartsAcknowledged", ["e17_q3_parts_second"] = "q3PartsAcknowledged",
         ["e17_q3_books_first"] = "q3BooksAcknowledged", ["e17_q3_books_second"] = "q3BooksAcknowledged",
         ["e17_q3_paid"] = "q3PaidShown", ["e17_q3_payment"] = "q3Payment",
-        ["e17_q3_ransom"] = "q3Ransom", ["e17_q3_expenses"] = "q3Expenses"
+        ["e17_q3_ransom"] = "q3ClosedAccountV018", ["e17_q3_expenses"] = "q3Expenses"
     };
     internal static bool Active(int status) => status is 2 or 3;
     internal static bool Available(int previousStatus, Func<string, bool> has) =>
-        previousStatus == 4 && has("q2Result");
+        previousStatus == 4 && has("q2ResultV018") && has("q2CargoV018");
     internal static bool ContextAllows(string target, bool booksFound, bool booksGiven, int status, bool begun, bool available)
     {
         // Previously unanswered topics can become obsolete through actual quest progress.
@@ -36,8 +40,7 @@ internal static class Q3Policy
     internal static string Entry(int status, bool partsGiven, bool booksGiven, Func<string, bool> has)
     {
         if (status == 4)
-            return !has("q3PaidShown") ? "e17_q3_paid" : !has("q3Ransom") && !has("q3Payment") ? "e17_q3_paid_resume" :
-                !has("q3Ransom") ? "e17_q3_payment_resume" : !has("q3Expenses") ? "e17_q3_ransom_resume" : "e17_q3_after";
+            return !has("q3PaidShown") ? "e17_q3_paid" : !has("q3ClosedAccountV018") ? "e17_q3_paid_resume" : "e17_q3_after";
         if (Active(status))
         {
             if (partsGiven && !has("q3PartsAcknowledged")) return HandoverTarget(true, booksGiven);
@@ -60,12 +63,12 @@ internal static class Q3Policy
             // Legacy joke facts remain stored, but never count as the new condition answer.
             case "e17_q3_name":
             case "e17_q3_weight": return false;
-            case "e17_q3_condition": return status is 0 or 1 or 2 && !booksGiven && has("q3Brief");
+            case "e17_q3_condition": return false;
             case "e17_q3_paid": return status == 3 && partsGiven && booksGiven;
             // The old acknowledgement remains a stored fact; the new dialogue goes straight to the ransom answer.
             case "e17_q3_payment": return false;
             case "e17_q3_ransom": return status == 4 && has("q3PaidShown");
-            case "e17_q3_expenses": return status == 4 && has("q3Ransom");
+            case "e17_q3_expenses": return false;
         }
         if (target.StartsWith("e17_q3_active_", StringComparison.Ordinal))
             return Active(status) && target == ActiveEntry(partsGiven, booksGiven);
@@ -83,8 +86,8 @@ internal static class Q3Policy
         if (fact == "q3BooksAcknowledged") return booksGiven;
         if (fact == "q3PaidShown") return status == 4;
         if (fact == "q3Payment") return false;
-        if (fact == "q3Ransom") return status == 4 && has("q3PaidShown");
-        if (fact == "q3Expenses") return status == 4 && has("q3Ransom");
+        if (fact == "q3ClosedAccountV018") return status == 4 && has("q3PaidShown");
+        if (fact == "q3Expenses") return false;
         return true;
     }
 
@@ -94,17 +97,16 @@ internal static class Q3Policy
         if (has("q3Rudin")) p.Add(E17Text.Get("t0038ac873734c899"));
         if (has("q3Brief")) p.Add(E17Text.Get("t99608e57497999cf") + "\n\n" +
             (Active(status) || status == 4 ? E17Text.Get("tcbcbfbd3809b1c0c") : E17Text.Get("t38d9758932b13476")));
-        if (has("q3Condition")) p.Add(E17Text.Get("t6bcce1a05ba04cdc"));
         if (partsFound && !partsGiven) p.Add(E17Text.Get("td44bcd4bbd9eb317"));
+        if (has(BooksReadFact)) p.Add((has("q3ClosedAccountV018") ? E17Text.Get("t0220000000000302") + "\n" : "") +
+            E17Text.Get("t0220000000000301"));
         if (partsGiven && booksGiven) p.Add(status == 4 ? E17Text.Get("tdaecade9c9229275") : E17Text.Get("t16e8e4aa2c4a0b8d"));
         else if (partsGiven) p.Add(E17Text.Get("t6b3aeea1bd47c0b5"));
         else if (booksGiven) p.Add(E17Text.Get("tadd47f0ede26c2f4"));
         if (status == 4)
         {
             p.Add(E17Text.Get("ted0fe3b82e61ccf8"));
-            if (has("q3Payment")) p.Add(E17Text.Get("t6e373120cb216714"));
-            if (has("q3Expenses")) p.Add(E17Text.Get("tfc0dbd52a42a5dd6"));
-            else if (has("q3Ransom")) p.Add(E17Text.Get("tcdf1692302fcdfb1"));
+            if (has("q3ClosedAccountV018")) p.Add(E17Text.Get("tfc0dbd52a42a5dd6"));
         }
         return p.Count == 0 ? "" : E17Text.Get("t41a517bb24bce4ad") + string.Join("\n\n", p);
     }

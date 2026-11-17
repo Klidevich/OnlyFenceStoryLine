@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0
+
+Beta release.
+
 ## 0.1.7
 
 Narrative changes.

@@ -15,7 +15,8 @@ internal static class NarrativePolicy
         ["e17_rescue"] = "rescue", ["e17_closed"] = "closed",
         ["e17_act"] = "booksKnown",
         ["e17_company"] = "company", ["e17_delivery"] = "dispatched",
-        ["e17_van"] = "route", ["e17_ours"] = "ours", ["e17_archive"] = "archive",
+        ["e17_van"] = "route", ["e17_ours"] = "introOursV018", ["e17_archive"] = "archive",
+        ["e17_q1_separate"] = "q1Separate", ["e17_q1_person"] = "q1Person",
         ["e17_books"] = "uncertain", ["e17_ticket_unknown"] = "ticketFirst",
         ["e17_ticket_held"] = "ticketFirst", ["e17_ticket_lost"] = "ticketFirst",
         ["e17_ticket_second"] = "ticketSecond", ["e17_radio_first"] = "radioFirst",
@@ -24,7 +25,7 @@ internal static class NarrativePolicy
     };
 
     internal static bool Preparing(Func<string, bool> has) => has("radioFirst") || has("radioSecond") || has("finished");
-    internal static IEnumerable<string> JournalFacts => Facts.Values.Concat(new[] { "books", "bill", "actExplained", "coordinatorClaim", "motive", "briefed", "intro2_motive", "intro3_rescue", "intro3_delivery", "intro3_van", "intro4_closed", "intro4_company", "q1RadioVoice", "q2Brief" });
+    internal static IEnumerable<string> JournalFacts => Facts.Values.Concat(new[] { "books", "bill", "actExplained", "coordinatorClaim", "motive", "briefed", "intro2_motive", "intro3_rescue", "intro3_delivery", "intro3_van", "intro4_closed", "intro4_company", "q1RadioVoice", "q2Brief", "q1RadioV018" });
     internal static string HandoverTarget(bool ticket, bool otherGiven, bool radioFound, bool radioHeld) =>
         !ticket ? (otherGiven ? "e17_radio_second" : "e17_radio_first") : otherGiven ? "e17_ticket_second" :
         radioHeld ? "e17_ticket_held" : radioFound ? "e17_ticket_lost" : "e17_ticket_unknown";
@@ -54,8 +55,10 @@ internal static class NarrativePolicy
             if (route) paragraphs.Add(E17Text.Get("t60cb3cd46158a876"));
             if (accepted) paragraphs.Add(E17Text.Get("t6991fee75f5cef9e"));
         }
-        if (has("ours")) paragraphs.Add(E17Text.Get("t71131ed4f5f2397b"));
+        if (has("introOursV018")) paragraphs.Add(E17Text.Get("t71131ed4f5f2397b"));
         if (has("archive")) paragraphs.Add(E17Text.Get("te2305f3ddf21e6ed"));
+        if (has("q1Separate")) paragraphs.Add(E17Text.Get("t0180000000000101"));
+        if (has("q1Person")) paragraphs.Add(E17Text.Get("t0180000000000102"));
         return paragraphs.Count == 0 ? "" : E17Text.Get("t34a3854c443907c0") + string.Join("\n\n", paragraphs);
     }
 
@@ -66,10 +69,9 @@ internal static class NarrativePolicy
         if (radioGiven)
         {
             p.Add(E17Text.Get("t269800a86560bac7"));
-            if (has("radioFirst") || has("radioSecond"))
-                p.Add(E17Text.Get(has("q1RadioVoice") || has("q2Brief") ? "ta8a2bd7785b564f7" : "t0100000000000003"));
+            if (has("q1RadioV018")) p.Add(E17Text.Get("ta8a2bd7785b564f7"));
         }
-        // The workshop question adds no new fact; the required radio answer already gives the landmark.
+        if (has("workshop")) p.Add(E17Text.Get("t25cf33128b49e86d"));
         if (has("cargo")) p.Add(E17Text.Get("tf49f1e8f9787b0fc"));
         if (success)
         {

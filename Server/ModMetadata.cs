@@ -10,7 +10,7 @@ public record ModMetadata : IModMetadata
     public string Name { get; init; } = "OnlyFenceStoryLine";
     public string Author { get; init; } = "Klidevich";
     public List<string>? Contributors { get; init; } = ["Klidevich", "Codex (OpenAI)"];
-    public Version Version { get; init; } = new("0.1.7");
+    public Version Version { get; init; } = new("0.2.0");
     public Range SptVersion { get; init; } = new("4.1.6");
     public bool HasPrepatcher { get; init; }
     public List<string>? Incompatibilities { get; init; } = [];

@@ -19,6 +19,10 @@ internal static class ProgressSync
     static bool busy;
     static float retryAt;
 
+    // Only document receipts can be flushed from a live raid. All other queued
+    // narrative changes retain their existing lobby-only persistence boundary.
+    internal static bool RaidReadable(string fact) => fact == Q2Policy.NoteReadFact || fact == Q3Policy.BooksReadFact;
+
     internal static void Queue(QuestController qc, string fact)
     {
         if (qc?.Profile == null) return;
@@ -29,10 +33,12 @@ internal static class ProgressSync
 
     internal static void Tick(QuestController qc)
     {
-        if (busy || Time.unscaledTime < retryAt || !QuestOps.IsLobby(qc) || !QuestOps.IsLive(qc) ||
+        if (busy || Time.unscaledTime < retryAt || !QuestOps.IsLive(qc) ||
             qc?.Profile == null || !Pending.TryGetValue(qc.Profile.Id, out var facts) || facts.Count == 0) return;
+        var writable = QuestOps.IsLobby(qc) ? facts.ToArray() : facts.Where(RaidReadable).ToArray();
+        if (writable.Length == 0) return;
         busy = true;
-        Plugin.Instance.StartCoroutine(Save(qc.Profile.Id, facts.ToArray()));
+        Plugin.Instance.StartCoroutine(Save(qc.Profile.Id, writable));
     }
 
     static IEnumerator Save(string profileId, string[] facts)

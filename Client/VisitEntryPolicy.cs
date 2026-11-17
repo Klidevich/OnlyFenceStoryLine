@@ -7,6 +7,6 @@ internal static class VisitEntryPolicy
     internal const string FirstQuestId = "c50c495eb5a978728eaf9d59";
     internal static bool NeedsBriefing(int firstQuestStatus) => firstQuestStatus is 0 or 1;
     internal static bool OffersNewQuest(int questStatus) => questStatus == 1;
-    internal static bool NeedsVisit(int questStatus, bool hasReadyHandover) =>
-        OffersNewQuest(questStatus) || questStatus == 2 && hasReadyHandover;
+    internal static bool NeedsVisit(int questStatus, bool hasReadyHandover, bool hasReadyReport = false) =>
+        OffersNewQuest(questStatus) || questStatus == 3 || questStatus == 2 && (hasReadyHandover || hasReadyReport);
 }

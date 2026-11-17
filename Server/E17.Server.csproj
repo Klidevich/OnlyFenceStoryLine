@@ -4,10 +4,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>CustomQuests.E17.Server</AssemblyName>
-    <Version>0.1.7</Version>
+    <Version>0.2.0</Version>
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <SptRuntime Condition="'$(SptRuntime)' == ''">D:\SPTNEW lilbit\SPT_Runtime</SptRuntime>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../Content/late-q05-q13.json" LogicalName="CustomQuests.E17.late-q05-q13.json" />
+    <EmbeddedResource Include="../Content/late-q14-q22.json" LogicalName="CustomQuests.E17.late-q14-q22.json" />
+    <EmbeddedResource Include="../Content/rewards-v018.json" LogicalName="CustomQuests.E17.rewards-v018.json" />
+  </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Reference Include="SPTarkov.Server.Core" HintPath="$(SptRuntime)\SPTarkov.Server.Core.dll" Private="false" />
@@ -15,4 +19,7 @@
     <Reference Include="SPTarkov.DI" HintPath="$(SptRuntime)\SPTarkov.DI.dll" Private="false" />
     <Reference Include="SemanticVersioning" HintPath="$(SptRuntime)\SemanticVersioning.dll" Private="false" />
   </ItemGroup>
+  <Target Name="RequirePreparedReleaseContent" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(ReleaseContentPrepared)' != 'true'" Text="Run build.ps1 with the matching release ZIP to prepare the content and build both projects." />
+  </Target>
 </Project>

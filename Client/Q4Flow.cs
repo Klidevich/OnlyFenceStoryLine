@@ -31,13 +31,30 @@ internal static class Q4Flow
             InQuestStash = stash != null && new[] { stash }.GetAllItemsFromCollections().Any(i => i.StringTemplateId == Q4Policy.Request),
             BusinessFound = found(Q4Policy.BusinessReply), BusinessGiven = VisitFlow.Given(q, Q4Policy.BusinessReply),
             BusinessHeld = VisitFlow.Held(qc, Q4Policy.BusinessReply), PersonalFound = found(Q4Policy.PersonalCopy),
+            RequestRead = VisitFlow.Has(qc, "q4RequestRead"), PersonalRead = VisitFlow.Has(qc, "q4PersonalRead"),
+            CopyRead = VisitFlow.Has(qc, "q4CopyRead"), PersonalHeld = VisitFlow.Held(qc, Q4Policy.PersonalRequest),
+            Attached = VisitFlow.Has(qc, "q4Attached"), BusinessExtracted = VisitFlow.Has(qc, "q4BusinessExtracted"),
+            PersonalExtracted = VisitFlow.Has(qc, "q4PersonalExtracted"), FailedAttempt = VisitFlow.Has(qc, "q4FailedAttempt"),
+            IncompleteAttempt = VisitFlow.Has(qc, "q4IncompleteAttempt"),
             Parcel = Q4RequestSync.State(qc)
         };
     }
     internal static bool Available(QuestController qc) => Q4Policy.Available((int?)Q3Flow.Quest(qc)?.QuestStatus ?? 0, f => VisitFlow.Has(qc, f));
-    internal static bool Begun(QuestController qc) => VisitFlow.Has(qc, "q4Ready") || Q4Policy.Briefed(f => VisitFlow.Has(qc, f)) || (int?)Quest(qc)?.QuestStatus is 2 or 3 or 4;
+    internal static bool Begun(QuestController qc) => VisitFlow.Has(qc, "q4ReadyV018") || Q4Policy.Briefed(f => VisitFlow.Has(qc, f)) || (int?)Quest(qc)?.QuestStatus is 2 or 3 or 4;
     internal static string Entry(QuestController qc) => Available(qc) ? Q4Policy.Entry(State(qc), f => VisitFlow.Has(qc, f)) : Q3Flow.Entry(qc);
     internal static bool Question(string target) => target is "e17_q4_wait" or "e17_q4_debt";
+    internal static bool CanAttach(QuestController qc)
+    {
+        var s = State(qc); return QuestOps.IsLobby(qc) && Q4Policy.Active(s.Status) && !s.Placed && !s.RepliesReady &&
+            s.RequestRead && s.PersonalRead && s.RequestHeld && s.PersonalHeld && !s.Attached && !Q4ActionSync.Busy;
+    }
+    internal static void Attach(QuestController qc) { if (CanAttach(qc)) Q4ActionSync.Action(qc, "attach"); }
+    internal static void Read(QuestController qc, string template)
+    {
+        if (template is Q4Policy.Request or Q4Policy.PersonalRequest or Q4Policy.PersonalCopy)
+            Q4ActionSync.Action(qc, "read", template);
+    }
+    internal static void RecoverPersonal(QuestController qc) => Q4ActionSync.Action(qc, "recoverPersonal");
     internal static bool Allowed(DialogOption option, QuestController qc)
     {
         if (option.Target is "e17_q3_entry" or "e17_q3_continue") return !Available(qc) || !Begun(qc);
@@ -72,12 +89,11 @@ internal static class Q4Flow
                 NotificationManager.DisplayMessageNotification(E17Text.Get("t402481adb9c9f17f"));
             }
             if (s.Placed && !wasPlaced && !controllerChanged)
-                NotificationManager.DisplayMessageNotification(E17Text.Get("t0d9e0d52f57c11d1"));
+                NotificationManager.DisplayMessageNotification(E17Text.Get(s.Attached ? "tc0a349ea1e872088" : "t390849096bb8582e"));
         }
         if (!controllerChanged && (wasHeld != s.RequestHeld || wasPlaced != s.Placed)) ChapterEvents.Raise();
         wasHeld = s.RequestHeld; wasPlaced = s.Placed;
-        Q4RequestSync.Tick(qc, Q4Policy.Active(s.Status) && s.ClaimGiven &&
-            (!s.Placed && !s.RequestHeld || s.Placed && !s.RepliesReady));
+        Q4RequestSync.Tick(qc, Q4Policy.Active(s.Status) && s.ClaimGiven);
     }
     internal static string Journal(QuestController qc) => Q4Policy.Journal(State(qc), f => VisitFlow.Has(qc, f));
     internal static string Objective(QuestController qc) => Q4Policy.Objective(State(qc), f => VisitFlow.Has(qc, f));

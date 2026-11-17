@@ -33,7 +33,28 @@ public static class ProgressPolicy
         "intro3_rescue", "intro3_delivery", "intro3_van", "intro4_closed", "intro4_company", "q1RadioVoice", "q2ReadyVoice", "q4ReadyVoice", "q2Friend", "q1RouteReminder", "q2RouteReminder", "q2ReportedReminder",
         "q2ReplacementRequested", "q2ReplacementReceived",
         "q4Ready", "q4Brief", "q4Wait", "q4ClaimAcknowledged", "q4Debt", "q4BusinessAcknowledged", "q4PaidShown", "q4Received"
+        , "introOursV018", "q1RadioV018", "q1Separate", "q1Person", "q2ReadyV018", "q2BriefV018",
+        "q2ResultV018", "q2CargoV018", "q3ClosedAccountV018", "q4ReadyV018", "q4BriefV018",
+        "q2NoteReadV022", "q3BooksReadV022", "q2ArrivalV022", "q4AdmissionV022", "q4AdmissionEndV022"
     };
+    static ProgressPolicy()
+    {
+        foreach (var name in new[] { "late-q05-q13.json", "late-q14-q22.json" })
+        {
+            using var stream = typeof(ProgressPolicy).Assembly.GetManifestResourceStream("CustomQuests.E17." + name);
+            if (stream == null) continue; // Standalone legacy policy checks have no late catalog.
+            using var document = System.Text.Json.JsonDocument.Parse(stream);
+            foreach (var node in document.RootElement.GetProperty("dialogue").EnumerateArray())
+                if (node.TryGetProperty("shown", out var facts))
+                    foreach (var entry in facts.EnumerateArray())
+                    {
+                        var fact = entry.GetString();
+                        if (fact == null || !fact.StartsWith("late_q", StringComparison.Ordinal))
+                            throw new InvalidDataException("Invalid authored E17 presentation fact");
+                        Allowed.Add(fact);
+                    }
+        }
+    }
     public static MongoId Id(string fact) => new(Convert.ToHexString(
         MD5.HashData(Encoding.UTF8.GetBytes("visitapi.var|cq_e17_v1_" + fact)))[..24].ToLowerInvariant());
     public static bool Valid(string[]? facts) => facts is { Length: > 0 and <= 128 } && facts.All(Allowed.Contains);

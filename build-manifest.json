@@ -1,0 +1,245 @@
+{
+  "format": 1,
+  "version": "0.2.0",
+  "archivePrefix": "build-content/OnlyFenceStoryLine-0.2.0/",
+  "content": {
+    "late-q05-q13.json": "c6c97c15c4182f53787087087e9c0cd1748efeb9802b7e9f574942ef196bb90f",
+    "late-q14-q22.json": "1ab2156ecb108339c4c24aaab7c745e7706d180da0b5ad989e12160b885928f0",
+    "rewards-v018.json": "81a0ee8a915e424878d091af5feec99f8c348359adeca6664d3462783405a05f",
+    "source-content.json": "f4d0493081b491f2c90d012d9d795cb1209a05ba8a594307164791bded2ac8b9"
+  },
+  "sources": {
+    "Client/ConversationPolicy.cs": {
+      "sha256": "f234e56f1a9e733836ad11e93d264af240eb165a6f0415636adef363ab9a0e04",
+      "utf8Bom": false
+    },
+    "Client/DialogueText.cs": {
+      "sha256": "aa419866791e8f4c2ffaa6476b08ebf1cf744160b92cc6dc05b20774ba6fb466",
+      "utf8Bom": false
+    },
+    "Client/E17ChapterLayout.cs": {
+      "sha256": "e24c3fb9bcb5097f72c8aa635eaf58bcbb4cb84e70ecd2c9d42a741c3068db90",
+      "utf8Bom": false
+    },
+    "Client/E17DocumentReader.cs": {
+      "sha256": "2340b35e163136bd1bb9a73ccc7884f3daf7087d98ee81bd248fde6453426ca4",
+      "utf8Bom": false
+    },
+    "Client/E17Text.cs": {
+      "sha256": "1b602114e82763f0bd40611c2d6ffcf41f57b84222e9c2c1c4f5ce5937d87f64",
+      "utf8Bom": false
+    },
+    "Client/IntroController.cs": {
+      "sha256": "e4deb6e7b03e93d3f51fc653e249050e2ad2c6f6f7bb58f8c15bae4b277478ca",
+      "utf8Bom": false
+    },
+    "Client/IntroPolicy.cs": {
+      "sha256": "856055bfb22bc8b6704c4b19b0cdf3e1501422d2b7087763de8d98c8a1e82c5d",
+      "utf8Bom": false
+    },
+    "Client/LateFlow.cs": {
+      "sha256": "df494f542df040dd06b15218b52a0bf6972f917fa4b003168f9f17fab89961c3",
+      "utf8Bom": false
+    },
+    "Client/LateInventoryApply.cs": {
+      "sha256": "90dac3fbe7d756abb10cab9be7aea87caf7ca2e12ba20d904f50be7a3715c8bd",
+      "utf8Bom": false
+    },
+    "Client/LateNavigation.cs": {
+      "sha256": "f19121da3d2529400f638f422f179d675e3fa404576fae22f4c5a364461c40ab",
+      "utf8Bom": false
+    },
+    "Client/LateNavigationImage.cs": {
+      "sha256": "8339c4bd97ac3d6247f37ca45a02e32dea0a14a37297873e9df53230a42c0cd3",
+      "utf8Bom": false
+    },
+    "Client/LatePlacements.cs": {
+      "sha256": "65655136f92bfc8d86ab322072e98d58633c87dd5fb1d514ed03eebbd1ab7932",
+      "utf8Bom": false
+    },
+    "Client/LatePolicy.cs": {
+      "sha256": "dad6444d49a98d7c6179bba543000c0040f00c449ffc0be0e75422463e33e743",
+      "utf8Bom": false
+    },
+    "Client/LateSync.cs": {
+      "sha256": "d9483bfff0d591fb49e42e7a32a70a133445cf8b5ad7686cf20d157e0ee577be",
+      "utf8Bom": false
+    },
+    "Client/LateTradeAccess.cs": {
+      "sha256": "2b38f8a514a9077384aa392da26521b8d799bb509af436ce9d7eed7487230dda",
+      "utf8Bom": false
+    },
+    "Client/MenuStartDelay.cs": {
+      "sha256": "c37e0103dc0c77a1f8b58a8b76aec394f71f80ddaa8509e7ed147d78902b18df",
+      "utf8Bom": false
+    },
+    "Client/NarrativePolicy.cs": {
+      "sha256": "35c4c18147fe9b2371929e4222936f7569ec382d397e39c21927d9d5efd732ee",
+      "utf8Bom": false
+    },
+    "Client/NarrativeUI.cs": {
+      "sha256": "0dd901947f9731e91880c2aa1ac3cb9d6610586f2cb441e04350da9a06213212",
+      "utf8Bom": false
+    },
+    "Client/ParcelStatusSync.cs": {
+      "sha256": "6a8e3aeecf2f37f58e78ecfa00968c93139e2a5d11259aef97fa7c4df3ba782f",
+      "utf8Bom": false
+    },
+    "Client/Plugin.cs": {
+      "sha256": "c94183fde82391dd7e3c90066bc669550a6511931ab086767925d0f30e108bc7",
+      "utf8Bom": false
+    },
+    "Client/ProgressSync.cs": {
+      "sha256": "81ee0772e9282b26bae637e7f5e63118f1dddf5fd55699dc3032c9ac18c776a6",
+      "utf8Bom": false
+    },
+    "Client/Q1FlowPolicy.cs": {
+      "sha256": "b76d1fd71b119688fa297215a4488f22074b8d77db5b6fb983a278dd3a694b66",
+      "utf8Bom": false
+    },
+    "Client/Q2Flow.cs": {
+      "sha256": "63964fca094f37e561e0d613e470bccf98f20f17c2387402b6218eb419bcd8f4",
+      "utf8Bom": false
+    },
+    "Client/Q2PlacementFeedback.cs": {
+      "sha256": "d3f764ca174aeaaf3125a451ce8b178099929654e4073405ea4ab77caadf44e2",
+      "utf8Bom": false
+    },
+    "Client/Q2Policy.cs": {
+      "sha256": "e1d261795d29cd15722a3727b79cb0d8d17f130571ab70d982390888e641c156",
+      "utf8Bom": false
+    },
+    "Client/Q3Flow.cs": {
+      "sha256": "5c60cf467ecc145c5fec2bfae6090f3cbf4fabd1388bfcbafa29c60dfe21f836",
+      "utf8Bom": false
+    },
+    "Client/Q3Policy.cs": {
+      "sha256": "57af83c82279ed252cae6a9cc4c71e22f4ed2987dded492c39608490e124b917",
+      "utf8Bom": false
+    },
+    "Client/Q4ActionSync.cs": {
+      "sha256": "1fbef271cd1bb0210efd8aecf2187b8820b158faf81eb6b725fb3fd581cff029",
+      "utf8Bom": false
+    },
+    "Client/Q4Flow.cs": {
+      "sha256": "8c67c57533d3c254846c27deb1c812fd7c20bd924c5b8b1b992a86c7800845fa",
+      "utf8Bom": false
+    },
+    "Client/Q4Policy.cs": {
+      "sha256": "8bd3c7846fe877c120ad1b5541d789a78d6b9d4f6975a2cb8f626744174ab870",
+      "utf8Bom": false
+    },
+    "Client/Q4RequestSync.cs": {
+      "sha256": "324df0b7dac1281df786a551b53eaddca3b3fe57693247ca8cb2a8b9a9a29714",
+      "utf8Bom": false
+    },
+    "Client/QuestItemSense.cs": {
+      "sha256": "3cc1796bf144419c3951d4da94efb196483fd6dc607526bf1c030211eabf0934",
+      "utf8Bom": false
+    },
+    "Client/VisitEntryPolicy.cs": {
+      "sha256": "2a348763a40fc5393676f62ee501f06178e0da7cba990d5a5124005355e59f21",
+      "utf8Bom": false
+    },
+    "Client/VisitFlow.cs": {
+      "sha256": "27b2ced7e3fa8afd0f0106488c9fae00bcde70307bcba4fc5d9b975246b3f558",
+      "utf8Bom": false
+    },
+    "Client/VisitLoading.cs": {
+      "sha256": "02c906204a3aedcdae5c6f958a452902cfff495d39736a5e25d3819596ea2070",
+      "utf8Bom": false
+    },
+    "Client/VisitLoadSequence.cs": {
+      "sha256": "b0fb4ac8487176870cc2f77e6cb4d45fb349fcec7bae834e318765f50fde46c3",
+      "utf8Bom": false
+    },
+    "Client/VisitScreenPreparation.cs": {
+      "sha256": "64e7e4ee59f46a4839d22a978abef01db632c74f82df5391c8f6ea9af9b6c30c",
+      "utf8Bom": false
+    },
+    "Client/VisitUiLease.cs": {
+      "sha256": "51f8d947450ae60f230e8763cf74ed3a206e3879b73d1013bef59d9b53631786",
+      "utf8Bom": false
+    },
+    "Server/IntroRouter.cs": {
+      "sha256": "c37a17203da49adddd42481bca84eb2ca44567d094c7ce2a6583a6e45cda1921",
+      "utf8Bom": false
+    },
+    "Server/IntroState.cs": {
+      "sha256": "bd66ec78528410e6ef77970463da37de61b780c45c112e92eb7698d86eb18065",
+      "utf8Bom": false
+    },
+    "Server/LateInventoryDelta.cs": {
+      "sha256": "24918b10e662e9cbf8a1a7f1939956995f4e86402827a9ced0226e9569f13082",
+      "utf8Bom": false
+    },
+    "Server/LateInventoryRouter.cs": {
+      "sha256": "eb78f7ec72c097d5c2f966b68ed17d3c884e5afb2d4303adcea167ce173727de",
+      "utf8Bom": false
+    },
+    "Server/LatePolicy.cs": {
+      "sha256": "98f3b3277de480d89a251dfcb3074660701c802e205d896e4ba198887bf11d69",
+      "utf8Bom": false
+    },
+    "Server/LateRouter.cs": {
+      "sha256": "a284a151c190132088a736cd9f8b29da24401547a8a214684994992a1de0336b",
+      "utf8Bom": false
+    },
+    "Server/LateRules.cs": {
+      "sha256": "09bec2f07ded6f8e5deec273c7b4ed4d2c100bfe432d3144c20eb505a3ad8224",
+      "utf8Bom": false
+    },
+    "Server/LateService.cs": {
+      "sha256": "4cb058c01a23396ddeec5bdf269942299920f77e8eef583bda314b9b43bda88a",
+      "utf8Bom": false
+    },
+    "Server/LateTransaction.cs": {
+      "sha256": "f84259d4e57688babb38fe0cac851ebba7d4e22fb4bfcd9a42ed5a5455d7981e",
+      "utf8Bom": false
+    },
+    "Server/ModMetadata.cs": {
+      "sha256": "4ef8f60afd58d167afc489ab455ae0cd029aa3b82cfdc75980d0e19fa2c5fff4",
+      "utf8Bom": false
+    },
+    "Server/ParcelInventoryMigrationPolicy.cs": {
+      "sha256": "e360630dbc76487a923eae46bf80d97dc34dd68c02a1d314220faecfd5eb1f2a",
+      "utf8Bom": false
+    },
+    "Server/ParcelInventoryMigrationRouter.cs": {
+      "sha256": "982fbc0c371af3506aae38682ae1f7aee5d68c4074975d2dac0706812a533e08",
+      "utf8Bom": false
+    },
+    "Server/ParcelPolicy.cs": {
+      "sha256": "af0c48de289bce3b574f4e929aed7c91839c72d6610801ff33a836962f02e8d9",
+      "utf8Bom": false
+    },
+    "Server/ParcelRouter.cs": {
+      "sha256": "f074b82e4871a9cf5bd9b4ea61791a8b44577bec86c1d8234feabbdc6c4d2483",
+      "utf8Bom": false
+    },
+    "Server/ProgressRouter.cs": {
+      "sha256": "b076d349be563bf3f160acd82449e75779fada8d1b439ef048843d5b3bb77d99",
+      "utf8Bom": false
+    },
+    "Server/Q2NoteCleanup.cs": {
+      "sha256": "bb759a7049878e1d2b22773a0ccd597a32fb8810201d2811e5705f35238e449e",
+      "utf8Bom": false
+    },
+    "Server/Q4Policy.cs": {
+      "sha256": "440e7062e536a41e67895167e6885ac02da6038328f1ef5f24611e923bbd5fe7",
+      "utf8Bom": false
+    },
+    "Server/Q4Router.cs": {
+      "sha256": "2a4f1771fe63aa3ddbd889397a734a31ad5cc2f3c73b2a6f56f30b3d17b04e19",
+      "utf8Bom": false
+    },
+    "Server/StarterGift.cs": {
+      "sha256": "5a1f5ed66c16ceaaabf4ba33f7dbadf0d34b6a3f20565458fdbc6658bb11ac0d",
+      "utf8Bom": false
+    },
+    "Server/StarterGiftLoader.cs": {
+      "sha256": "58680b82f3ee57b906be3c5ea12dbdd5f1bd169726087d7730e9229b966e1768",
+      "utf8Bom": false
+    }
+  }
+}

@@ -15,8 +15,9 @@ using VisitAPI.ChapterUI;
 namespace CustomQuests.E17;
 
 // Client integration for the content included in this release.
-[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.1.7")]
+[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.2.0")]
 [BepInDependency("com.sora.visitapi")]
+[BepInDependency("com.onlyfence.client", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed class Plugin : BaseUnityPlugin
 {
     internal static Plugin Instance;
@@ -47,18 +48,29 @@ public sealed class Plugin : BaseUnityPlugin
     void Awake()
     {
         Instance = this;
+        LatePolicy.Load();
+        foreach (var definition in LatePolicy.Quests)
+        {
+            var key = (string)definition["key"]; var id = LatePolicy.Id(key);
+            Quests.Add(id);
+            foreach (var condition in definition["conditions"])
+                if ((string)condition["type"] == "FindItem") ItemQuests[LatePolicy.Id((string)condition["item"])] = id;
+        }
         E17Text.Lookup = source => VisitAPI.Loc.Key(E17Text.Prefix + source) ?? source;
         harmony = new Harmony("com.klidevich.customquests.e17");
         harmony.PatchAll(typeof(Plugin).Assembly);
-        Logger.LogInfo("OnlyFenceStoryLine runtime 0.1.7 loaded; Russian, English and Korean localization.");
+        LateTradeAccess.Install(harmony);
+        Logger.LogInfo("OnlyFenceStoryLine runtime 0.2.0 Beta loaded; Russian, English and Korean localization.");
     }
 
     void OnDestroy()
     {
+        VisitLoading.Dispose();
         VisitFlow.Clear();
         IntroController.Dispose();
         ParcelStatusSync.Dispose();
         Q4Flow.Dispose();
+        LateSync.Clear();
         if (watched != null) watched.AddItemEvent -= OnAdded;
         harmony?.UnpatchSelf();
     }
@@ -92,6 +104,7 @@ public sealed class Plugin : BaseUnityPlugin
         Refresh(qc);
         Q2Flow.Observe(qc);
         Q4Flow.Observe(qc);
+        LateSync.Tick(qc);
     }
 
     void OnAdded(AddItemEventArgs e)
@@ -139,7 +152,12 @@ public sealed class Plugin : BaseUnityPlugin
                 }
                 if (!q.ProgressCheckers.TryGetValue(c, out var checker)) continue;
                 var previous = checker.HasGetter() ? checker.CurrentValue : 0;
-                checker.SetCurrentValueGetter(_ => counter.Value >= 1 ? 1 : 0);
+                // This Q4 native condition is the server's personal-copy extraction
+                // condition. Its discovery counter still preserves knowledge, while
+                // the completion getter must not turn pickup/death into a live exit.
+                if (q.Id == Q4Policy.QuestId && c.target.Contains(Q4Policy.PersonalCopy))
+                    checker.SetCurrentValueGetter(_ => VisitFlow.Has(qc, "q4PersonalExtracted") ? 1 : 0);
+                else checker.SetCurrentValueGetter(_ => counter.Value >= 1 ? 1 : 0);
                 changed |= previous != checker.CurrentValue;
             }
             if (changed)
@@ -153,14 +171,15 @@ public sealed class Plugin : BaseUnityPlugin
     }
 
     internal static bool Found(Quest q, string tpl, Profile profile) =>
-        profile != null && q.GetConditions<ConditionFindItem>(EQuestStatus.AvailableForFinish)
+        profile != null && q != null && q.GetConditions<ConditionFindItem>(EQuestStatus.AvailableForFinish)
             .Where(c => c.target.Contains(tpl)).Any(c => profile.GetTaskConditionCounter(q, c.id).Value >= 1);
 
     [HarmonyPatch(typeof(QuestOps), nameof(QuestOps.Finish))]
     static class KeepChapterOpen
     {
-        // These are the first four assignments, not the end of the E-17 story.
-        static bool Prefix(Quest quest) => quest?.Id != ChapterId;
+        // The final authored conversation is completed manually before the chapter may close.
+        static bool Prefix(Quest quest) => quest?.Id != ChapterId ||
+            LateFlow.Quest(QuestOps.Resolve(), "q22")?.QuestStatus == EQuestStatus.Success;
     }
 
     [HarmonyPatch(typeof(ChapterStates), nameof(ChapterStates.Snap))]
@@ -230,6 +249,12 @@ public sealed class Plugin : BaseUnityPlugin
             if (__instance is not Quest q || !Quests.Contains(q.Id)) return;
             var qc = QuestOps.Resolve();
             if (qc?.Profile == null || qc.Quests?.GetConditional(q.Id) != q) return;
+            var late = LatePolicy.Quest(q.Id);
+            if (late != null)
+            {
+                var definition = late["conditions"].FirstOrDefault(c => LatePolicy.Id((string)c["key"]) == condition.id);
+                if (definition != null) __result &= LateFlow.Test(qc, definition["when"]);
+            }
             if (q.Id == "c50c495eb5a978728eaf9d59" && condition is ConditionItem item && item.target.Contains("e208363938a46fbc1507af21"))
             {
                 var radio = Found(q, "e208363938a46fbc1507af21", qc.Profile);
@@ -245,8 +270,7 @@ public sealed class Plugin : BaseUnityPlugin
                     __result = Q4Flow.RepliesReady(qc) &&
                         (condition is ConditionFindItem || Found(q, Q4Policy.BusinessReply, qc.Profile));
                 else if (fourth.target.Contains(Q4Policy.PersonalCopy))
-                    __result = Q4Flow.RepliesReady(qc) &&
-                        (Found(q, Q4Policy.BusinessReply, qc.Profile) || Found(q, Q4Policy.PersonalCopy, qc.Profile));
+                    __result = Q4Flow.RepliesReady(qc);
             }
         }
     }
@@ -260,20 +284,40 @@ public sealed class Plugin : BaseUnityPlugin
             var tpl = lootItem.Item.StringTemplateId;
             if (!ItemQuests.TryGetValue(tpl, out var questId)) return true;
             var q = questPlayer.QuestController?.Quests?.GetConditional(questId);
-            if (questId == Q4Policy.QuestId && (tpl == Q4Policy.BusinessReply || tpl == Q4Policy.PersonalCopy) &&
-                (!Running(q) || !Q4Flow.RepliesReady(questPlayer.QuestController))) return false;
+            var lateItem = LatePolicy.Items.Values.FirstOrDefault(i => LatePolicy.Id((string)i["key"]) == tpl);
+            if (lateItem != null)
+            {
+                if (!Running(q) || !LateFlow.Test(questPlayer.QuestController, lateItem["spawnWhen"])) return false;
+                var handover = q.GetConditions<ConditionHandoverItem>(EQuestStatus.AvailableForFinish).Any(c => c.target.Contains(tpl));
+                if (!handover && Found(q, tpl, questPlayer.Profile)) return false;
+                if (VisitFlow.Given(q, tpl) || VisitFlow.Held(questPlayer.QuestController, tpl)) return false;
+            }
+            if (questId == Q4Policy.QuestId && (tpl == Q4Policy.BusinessReply || tpl == Q4Policy.PersonalCopy))
+            {
+                var qc = questPlayer.QuestController;
+                if (!Running(q) || !Q4Flow.RepliesReady(qc) || VisitFlow.Held(qc, tpl) ||
+                    tpl == Q4Policy.BusinessReply && VisitFlow.Given(q, tpl) ||
+                    tpl == Q4Policy.PersonalCopy && VisitFlow.Has(qc, "q4PersonalExtracted")) return false;
+                // Reading or a previous failed pickup is not an extracted copy.
+                // Business documents lost after extraction also need reacquisition
+                // until the actual item is handed over. Override the native find gate.
+                PermitProfile(lootItem, questPlayer.ProfileId);
+                return true;
+            }
             if (!Running(q)) return true;
-            if (tpl == Q4Policy.PersonalCopy && Found(q, tpl, questPlayer.Profile)) return false;
             var inventory = questPlayer.Profile?.Inventory;
             if (inventory == null || inventory.GetPlayerItems(EPlayerItems.QuestItems).Any(i => i.StringTemplateId == tpl)) return true;
             // The workshop note is not handed in; after discovery its text is sufficient.
-            if ((tpl == "90eb63a906ed4dff2fbbf0d8" || tpl == Q4Policy.PersonalCopy) && Found(q, tpl, questPlayer.Profile)) return true;
+            if (tpl == "90eb63a906ed4dff2fbbf0d8" && Found(q, tpl, questPlayer.Profile)) return true;
             if (q.GetConditions<ConditionHandoverItem>(EQuestStatus.AvailableForFinish)
                 .Any(c => c.target.Contains(tpl) && q.IsConditionDone(c))) return true;
-            MongoID me = questPlayer.ProfileId;
+            PermitProfile(lootItem, questPlayer.ProfileId);
+            return true;
+        }
+        static void PermitProfile(JsonLootItem lootItem, MongoID me)
+        {
             if (lootItem.ValidProfiles == null) lootItem.ValidProfiles = new[] { me };
             else if (!lootItem.ValidProfiles.Contains(me)) lootItem.ValidProfiles = lootItem.ValidProfiles.Concat(new[] { me }).ToArray();
-            return true;
         }
     }
 }

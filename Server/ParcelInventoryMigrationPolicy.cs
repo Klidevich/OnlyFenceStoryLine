@@ -12,6 +12,7 @@ public sealed record ParcelInventoryMigrationResult(int Moved, string? Warning =
 public static class ParcelInventoryMigrationPolicy
 {
     public const string RevisionKey = "customquestsE17ParcelRevision";
+    public const string Q4PersonalRequest = "3c37c676e97c4f8baa71ccdc";
 
     public static async Task<ParcelInventoryMigrationResult> Migrate(SptProfile? profile,
         TemplateTable templates, InventoryHelper inventory, Func<Task> save)
@@ -21,7 +22,7 @@ public static class ParcelInventoryMigrationPolicy
         if (items == null) return new(0);
         var targetId = source!.QuestStashItems?.ToString();
         var carriedId = source.QuestRaidItems?.ToString();
-        var parcels = items.Where(i => i.Template.ToString() == ParcelPolicy.TemplateId &&
+        var parcels = items.Where(i => (i.Template.ToString() is ParcelPolicy.TemplateId or Q4PersonalRequest) &&
             i.ParentId != targetId && i.ParentId != carriedId).ToList();
         if (parcels.Count == 0) return new(0);
         if (items.Select(i => i.Id).Distinct().Count() != items.Count)
@@ -32,9 +33,12 @@ public static class ParcelInventoryMigrationPolicy
         var grid = targetTemplate.Properties?.Grids?.SingleOrDefault();
         if (grid?.Name != "hideout" || grid.Properties?.CellsH is not > 0 || grid.Properties.CellsV is not > 0)
             return new(0, "quest stash grid is invalid; original parcel addresses retained");
-        if (!templates.Items.TryGetValue(ParcelPolicy.TemplateId, out var parcelTemplate) ||
-            parcelTemplate.Properties?.QuestItem != true)
-            return new(0, "quest parcel template is unavailable; original parcel addresses retained");
+        // Only these two authored mail attachments participate. Being a QuestItem alone is not an allowlist.
+        foreach (var template in parcels.Select(i => i.Template).Distinct())
+            if (!templates.Items.TryGetValue(template, out var parcelTemplate) ||
+                parcelTemplate.Properties?.QuestItem != true ||
+                parcelTemplate.Properties.Width is not > 0 || parcelTemplate.Properties.Height is not > 0)
+                return new(0, "quest attachment template is unavailable or invalid; original parcel addresses retained");
 
         var width = grid.Properties.CellsH.Value;
         var height = grid.Properties.CellsV.Value;

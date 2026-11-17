@@ -3,10 +3,13 @@
     <TargetFramework>net472</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AssemblyName>CustomQuests.E17</AssemblyName>
-    <Version>0.1.7</Version>
-    <GamePath Condition="'$(GamePath)' == ''">D:\SPTNEW lilbit</GamePath>
+    <Version>0.2.0</Version>
     <Managed>$(GamePath)\EscapeFromTarkov_Data\Managed</Managed>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../Content/late-q05-q13.json" LogicalName="CustomQuests.E17.late-q05-q13.json" />
+    <EmbeddedResource Include="../Content/late-q14-q22.json" LogicalName="CustomQuests.E17.late-q14-q22.json" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="BepInEx" HintPath="$(GamePath)\BepInEx\core\BepInEx.dll" Private="false" />
     <Reference Include="0Harmony" HintPath="$(GamePath)\BepInEx\core\0Harmony.dll" Private="false" />
@@ -17,6 +20,7 @@
     <Reference Include="Newtonsoft.Json" HintPath="$(Managed)\Newtonsoft.Json.dll" Private="false" />
     <Reference Include="UnityEngine" HintPath="$(Managed)\UnityEngine.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="$(Managed)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(Managed)\UnityEngine.PhysicsModule.dll" Private="false" />
     <Reference Include="UnityEngine.InputLegacyModule" HintPath="$(Managed)\UnityEngine.InputLegacyModule.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(Managed)\UnityEngine.UI.dll" Private="false" />
     <Reference Include="UnityEngine.UIModule" HintPath="$(Managed)\UnityEngine.UIModule.dll" Private="false" />
@@ -24,4 +28,7 @@
     <Reference Include="Sirenix.Serialization" HintPath="$(Managed)\Sirenix.Serialization.dll" Private="false" />
     <Reference Include="DissonanceVoip" HintPath="$(Managed)\DissonanceVoip.dll" Private="false" />
   </ItemGroup>
+  <Target Name="RequirePreparedReleaseContent" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(ReleaseContentPrepared)' != 'true'" Text="Run build.ps1 with the matching release ZIP to prepare the content and build both projects." />
+  </Target>
 </Project>
