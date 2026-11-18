@@ -1,11 +1,21 @@
-using System.Reflection;
-using EFT.Quests;
+using System;
+using System.Collections.Generic;
+using EFT;
 using HarmonyLib;
 using VisitAPI.Native;
 namespace CustomQuests.E17;
 
 internal static class LateTradeAccess
 {
+    // OnlyFence filters these vanilla traders independently of the native unlock flag.
+    // Keep its modded-trader setting intact; do not implement or persist story gates here.
+    static readonly HashSet<string> StandardTraders = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "54cb50c76803fa8b248b4571", "54cb57776803fa99248b456e",
+        "58330581ace78e27b8b10cee", "5935c25fb3acc3127c3d8cd9",
+        "5a7c2eca46aef81a7ca2145d", "5ac3b934156ae10c4430e83c",
+        "5c0647fdd443bc2504c2d371", "6617beeaa9cfa777ca915b7c"
+    };
     internal static void Install(Harmony harmony)
     {
         var type = AccessTools.TypeByName("OnlyFenceClient.OnlyFenceTraderScreensPatch");
@@ -17,9 +27,9 @@ internal static class LateTradeAccess
     }
     static void AfterShouldShow(string id, ref bool __result)
     {
-        var qc = QuestOps.Resolve();
-        if (qc == null) return;
-        if (id == LatePolicy.Trader("Therapist") && LateFlow.Quest(qc, "q14")?.QuestStatus == EQuestStatus.Success ||
-            id == LatePolicy.Trader("Prapor") && LateFlow.Quest(qc, "q17")?.QuestStatus == EQuestStatus.Success) __result = true;
+        if (__result || !StandardTraders.Contains(id)) return;
+        var profile = VisitBackend.Profile;
+        if (profile?.TradersInfo != null && profile.TradersInfo.TryGetValue(new MongoID(id), out var info) &&
+            info?.Unlocked == true) __result = true;
     }
 }

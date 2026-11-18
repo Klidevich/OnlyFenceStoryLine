@@ -15,7 +15,7 @@ using VisitAPI.ChapterUI;
 namespace CustomQuests.E17;
 
 // Client integration for the content included in this release.
-[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.2.0")]
+[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.2.1")]
 [BepInDependency("com.sora.visitapi")]
 [BepInDependency("com.onlyfence.client", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed class Plugin : BaseUnityPlugin
@@ -60,7 +60,7 @@ public sealed class Plugin : BaseUnityPlugin
         harmony = new Harmony("com.klidevich.customquests.e17");
         harmony.PatchAll(typeof(Plugin).Assembly);
         LateTradeAccess.Install(harmony);
-        Logger.LogInfo("OnlyFenceStoryLine runtime 0.2.0 Beta loaded; Russian, English and Korean localization.");
+        Logger.LogInfo("OnlyFenceStoryLine runtime 0.2.1 Beta loaded; Russian, English and Korean localization.");
     }
 
     void OnDestroy()

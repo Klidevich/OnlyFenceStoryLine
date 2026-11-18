@@ -1,12 +1,12 @@
 {
   "format": 1,
-  "version": "0.2.0",
-  "archivePrefix": "build-content/OnlyFenceStoryLine-0.2.0/",
+  "version": "0.2.1",
+  "archivePrefix": "build-content/OnlyFenceStoryLine-0.2.1/",
   "content": {
     "late-q05-q13.json": "c6c97c15c4182f53787087087e9c0cd1748efeb9802b7e9f574942ef196bb90f",
     "late-q14-q22.json": "1ab2156ecb108339c4c24aaab7c745e7706d180da0b5ad989e12160b885928f0",
     "rewards-v018.json": "81a0ee8a915e424878d091af5feec99f8c348359adeca6664d3462783405a05f",
-    "source-content.json": "f4d0493081b491f2c90d012d9d795cb1209a05ba8a594307164791bded2ac8b9"
+    "source-content.json": "3daa587d37a0f7b873e0448a2f7883fc9219759ec2d266ea65c5265cd1dea5c0"
   },
   "sources": {
     "Client/ConversationPolicy.cs": {
@@ -66,7 +66,7 @@
       "utf8Bom": false
     },
     "Client/LateTradeAccess.cs": {
-      "sha256": "2b38f8a514a9077384aa392da26521b8d799bb509af436ce9d7eed7487230dda",
+      "sha256": "437bfd0b21c947df3e546a81ea69c30bf5bf5abbfb0d85628e6237c89d43d978",
       "utf8Bom": false
     },
     "Client/MenuStartDelay.cs": {
@@ -86,7 +86,7 @@
       "utf8Bom": false
     },
     "Client/Plugin.cs": {
-      "sha256": "c94183fde82391dd7e3c90066bc669550a6511931ab086767925d0f30e108bc7",
+      "sha256": "9c94b1a4ee7b3488b4b2a7b2c3399a548a37e192e36f1a890bdeadb5ea229879",
       "utf8Bom": false
     },
     "Client/ProgressSync.cs": {
@@ -198,7 +198,7 @@
       "utf8Bom": false
     },
     "Server/ModMetadata.cs": {
-      "sha256": "4ef8f60afd58d167afc489ab455ae0cd029aa3b82cfdc75980d0e19fa2c5fff4",
+      "sha256": "4e8b7cfc9dc93e605339eae9244562c89e1fbd3d36dfd3675a2c0c416129f3bd",
       "utf8Bom": false
     },
     "Server/ParcelInventoryMigrationPolicy.cs": {

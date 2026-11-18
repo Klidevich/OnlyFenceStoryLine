@@ -1,18 +1,27 @@
 # OnlyFenceStoryLine
 
-A mod for **SPT 4.1.6**. **VisitAPI 1.3.7 is required** (client and server).
+A storyline mod for Zero to Hero playthrough in SPT **4.1.X**. **VisitAPI 1.3.7 is required** (client and server).
 
-**Beta 0.2.0 · English, Russian and Korean localization**
+**Case E-17** follows a former USEC operative who sabotaged a prisoner exchange in the hope of saving a friend—and lost everything. Now all he has left is a pistol, a ruined reputation, and jobs from Fence.
 
-**[Download Beta 0.2.0](https://github.com/Klidevich/OnlyFenceStoryLine/releases/tag/v0.2.0)**
+**Beta 0.2.1 · English, Russian and Korean localization**
 
-**Installation now requires two packages. Download and extract both into your SPT folder:** [Main package](https://github.com/Klidevich/OnlyFenceStoryLine/releases/download/v0.2.0/OnlyFenceStoryLine-0.2.0-SPT-4.1.6.zip) · [Additional rooms](https://github.com/Klidevich/OnlyFenceStoryLine/releases/download/v0.2.0/OnlyFenceStoryLine-0.2.0-AdditionalRooms.zip)
+[**Download Beta 0.2.1**](https://github.com/Klidevich/OnlyFenceStoryLine/releases/tag/v0.2.1)
+
+**Installation requires two packages. Download and extract both into your SPT folder:** [Main package](https://github.com/Klidevich/OnlyFenceStoryLine/releases/download/v0.2.1/OnlyFenceStoryLine-0.2.1-SPT-4.1.6.zip) · [Trader rooms](https://github.com/Klidevich/OnlyFenceStoryLine/releases/download/v0.2.1/OnlyFenceStoryLine-0.2.1-Rooms.7z)
 
 **A new SPT profile is required for this beta. Do not use an existing profile.**
 
 ![Fence visit](https://raw.githubusercontent.com/Klidevich/OnlyFenceStoryLine/main/image.png)
 
-## What's new in Beta 0.2.0
+## What's New in Beta 0.2.1
+
+- Traders now start locked
+- More traders become available as you complete storyline quests.
+- Completing the finale unlocks all traders.
+- All trader rooms now come in a separate archive; the main package contains the mod and storyline.
+
+## What's New in Beta 0.2.0
 
 - Expanded the storyline from 4 to 22 quests, with branching choices along the way.
 - Added visits to more traders, with four visit rooms across the storyline.
@@ -22,7 +31,7 @@ A mod for **SPT 4.1.6**. **VisitAPI 1.3.7 is required** (client and server).
 
 ## Requirements
 
-- **SPT 4.1.6**, using **EFT 0.16.9.5.40743**.
+- Tested on **SPT 4.1.6**, using **EFT 0.16.9.5.40743**. Other 4.1.x versions have not been verified.
 - **[VisitAPI 1.3.7](https://github.com/TricolourSky/VisitAPI/releases)**: install both its client and server components first.
 - **[OnlyFence](https://github.com/Klidevich/OnlyFence) is optional but recommended.** It is not required to install or run OnlyFenceStoryLine.
 
@@ -32,8 +41,8 @@ The two release archives include the room resources used by this mod. Installing
 
 1. Close the game and SPT server. Back up your profile and any existing files this mod replaces.
 2. Install the required VisitAPI client and server components.
-3. Download **both** `OnlyFenceStoryLine-0.2.0-SPT-4.1.6.zip` and `OnlyFenceStoryLine-0.2.0-AdditionalRooms.zip` from [Releases](https://github.com/Klidevich/OnlyFenceStoryLine/releases).
-4. Extract **both archives** into your SPT installation folder, alongside `EscapeFromTarkov.exe`. The main package contains the mod, Fence's room and shared resources; the additional archive contains the Ragman, Therapist and Prapor rooms required by the questline.
+3. Download **both** `OnlyFenceStoryLine-0.2.1-SPT-4.1.6.zip` and `OnlyFenceStoryLine-0.2.1-Rooms.7z` from [Releases](https://github.com/Klidevich/OnlyFenceStoryLine/releases).
+4. Use 7-Zip or another tool with 7z support to extract **both archives** into your SPT installation folder, alongside `EscapeFromTarkov.exe`. The main package contains the mod and storyline. The Rooms package contains all four trader rooms and the shared VisitAPI room resources.
 5. Start the SPT server. Create and select a **new profile** in the SPT Launcher, then start the game and create your character.
 
 The main installed paths are:
@@ -63,7 +72,7 @@ Please report the release version, game language, confirmation that you created 
 Install **PowerShell 7.2+** and the **.NET 10 SDK**, then build against your own SPT installation with VisitAPI already installed and the matching release ZIP:
 
 ```powershell
-pwsh -File ./build.ps1 -ReleaseArchive "C:\Downloads\OnlyFenceStoryLine-0.2.0-SPT-4.1.6.zip" -GamePath "C:\Path\To\SPT"
+pwsh -File ./build.ps1 -ReleaseArchive "C:\Downloads\OnlyFenceStoryLine-0.2.1-SPT-4.1.6.zip" -GamePath "C:\Path\To\SPT"
 ```
 
 The script reports both DLL paths in `.build/last-build.json`. Localized strings and embedded narrative resources are restored from the matching ZIP into the ignored build directory. Narrative data and game assemblies are not included in this source repository. The build does not deploy files into the game. See [build instructions](BUILD.md) for details.
