@@ -16,4 +16,6 @@ Edit the public `Client/*.cs` and `Server/*.cs` files to change the implementati
 
 For maintainers preparing a release, `-ContentDirectory` can replace `-ReleaseArchive` and point to the four matching build-content files before the ZIP exists. Release DLLs are built by this same script. Unmodified source hashes are checked against the manifest, and compiler paths are normalized. Exact binary reproduction also requires matching SDK and reference assemblies; the SDK version is included in the build report.
 
+The build omits local Git revision metadata so a clone and a downloaded source archive use the same assembly version. This does not alter the game logic.
+
 The build produces two DLLs. Installation still requires the entire matching playable release. Do not commit `.build/`, content files, game assemblies, or generated binaries.

@@ -76,9 +76,9 @@ if (!$PrepareOnly) {
     $game = [IO.Path]::GetFullPath($GamePath)
     $client = Join-Path $prepared 'Client/E17.Client.csproj'
     $server = Join-Path $prepared 'Server/E17.Server.csproj'
-    & dotnet build $client -c Release "-p:GamePath=$game" '-p:ReleaseContentPrepared=true' "-p:PathMap=$prepared=/_/OnlyFenceStoryLine" '-p:ContinuousIntegrationBuild=true' '-p:DebugType=none'
+    & dotnet build $client -c Release "-p:GamePath=$game" '-p:ReleaseContentPrepared=true' "-p:PathMap=$prepared=/_/OnlyFenceStoryLine" '-p:ContinuousIntegrationBuild=true' '-p:DebugType=none' '-p:IncludeSourceRevisionInInformationalVersion=false'
     if ($LASTEXITCODE -ne 0) { throw 'Client build failed.' }
-    & dotnet build $server -c Release "-p:SptRuntime=$(Join-Path $game 'SPT_Runtime')" '-p:ReleaseContentPrepared=true' "-p:PathMap=$prepared=/_/OnlyFenceStoryLine" '-p:ContinuousIntegrationBuild=true' '-p:DebugType=none'
+    & dotnet build $server -c Release "-p:SptRuntime=$(Join-Path $game 'SPT_Runtime')" '-p:ReleaseContentPrepared=true' "-p:PathMap=$prepared=/_/OnlyFenceStoryLine" '-p:ContinuousIntegrationBuild=true' '-p:DebugType=none' '-p:IncludeSourceRevisionInInformationalVersion=false'
     if ($LASTEXITCODE -ne 0) { throw 'Server build failed.' }
     $report.built = $true
     $report.client = Join-Path $prepared 'Client/bin/Release/net472/CustomQuests.E17.dll'
