@@ -64,7 +64,7 @@ public static class Q4Policy
         // Only legacy evidence is migrated, before native raid merge (pre-end hook).
         var delivery = Success(p) || LegacyProof(p) || ConditionDone(p, PlacementId);
         return new Q4Ledger { Delivery = delivery, RequestRead = delivery, PersonalRead = delivery,
-            PersonalIssued = delivery, CopyRead = Success(p) || delivery && ConditionDone(p, PersonalFindId),
+            PersonalIssued = delivery, CopyRead = Success(p) || Flag(p, "q4CopyRead"),
             PersonalExtracted = Success(p) || delivery && ConditionDone(p, PersonalFindId),
             BusinessExtracted = Success(p) || delivery && (ConditionDone(p, BusinessGiveId) ||
                 ConditionDone(p, BusinessFindId) && Held(p, BusinessReply)) };
@@ -75,7 +75,10 @@ public static class Q4Policy
     {
         if (p?.CharacterData?.PmcData == null) return false;
         var fresh = p.ExtensionData?.ContainsKey(LedgerKey) != true;
-        var state = Read(p); Write(p, state); return fresh;
+        var state = Read(p);
+        // Retain the old ledger and completed saves; the obsolete receipt is never a new gate.
+        if (Success(p)) { state.Delivery = true; state.PersonalExtracted = true; state.CopyRead = true; }
+        Write(p, state); return fresh;
     }
     public static void Write(SptProfile p, Q4Ledger state)
     {
@@ -133,10 +136,10 @@ public static class Q4Policy
         if (letter == null) return false;
         items.Remove(letter); s.AttachedRequest = packet.Id.ToString(); s.AttachedLetter = letter.Id.ToString(); Write(p, s); return true;
     }
-    public static bool CanGiveBusiness(SptProfile p) => Read(p).BusinessExtracted && Held(p, BusinessReply);
+    public static bool CanGiveBusiness(SptProfile p) => false;
     public static bool CanComplete(SptProfile p)
     {
-        var s = Read(p); return Success(p) || s.Delivery && s.BusinessExtracted && s.PersonalExtracted && s.CopyRead && ConditionDone(p, BusinessGiveId);
+        var s = Read(p); return Success(p) || s.Delivery && s.PersonalExtracted && s.CopyRead;
     }
     public static bool HasReplyProof(SptProfile? p) => Read(p).Delivery;
     public static bool RestoreReplyProof(SptProfile? p) => RecoverSavedPlacement(p);

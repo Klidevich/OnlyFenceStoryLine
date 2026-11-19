@@ -53,9 +53,9 @@ internal static class Q2Flow
         VisitFlow.Mark(qc, Q2Policy.NoteReadFact);
     internal static bool Chosen(DialogOption option, QuestController qc)
     {
-        if (option.Target is not ("e17_q2_replace" or "e17_q2_missing")) return true;
+        if (option.Target is not ("e17_q2_replace_confirm" or "e17_q2_recover_confirm")) return true;
         if (!QuestOps.IsLobby(qc) || !QuestOps.IsLive(qc) || !Allowed(option, qc)) return false;
-        if (option.Target == "e17_q2_replace") VisitFlow.Mark(qc, "q2ReplacementRequested");
+        if (option.Target == "e17_q2_replace_confirm") VisitFlow.Mark(qc, "q2ReplacementRequested");
         ParcelStatusSync.Replace(qc);
         return true;
     }

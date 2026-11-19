@@ -10,7 +10,7 @@ internal static class Q3Flow
     internal static Quest Quest(QuestController qc) => qc?.Quests?.GetConditional(Q3Policy.QuestId);
     static int Status(QuestController qc) => (int?)Quest(qc)?.QuestStatus ?? 0;
     internal static bool Available(QuestController qc) => Q3Policy.Available((int?)Q2Flow.Quest(qc)?.QuestStatus ?? 0, f => VisitFlow.Has(qc, f));
-    internal static bool Begun(QuestController qc) => VisitFlow.Has(qc, "q3Rudin") || Q3Policy.Active(Status(qc)) || Status(qc) == 4;
+    internal static bool Begun(QuestController qc) => VisitFlow.Has(qc, "q3Brief") || Q3Policy.Active(Status(qc)) || Status(qc) == 4;
     internal static string Entry(QuestController qc)
     {
         if (!Available(qc)) return Q2Flow.Entry(qc);

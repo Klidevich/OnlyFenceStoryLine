@@ -1,12 +1,12 @@
 {
   "format": 1,
-  "version": "0.2.1",
-  "archivePrefix": "build-content/OnlyFenceStoryLine-0.2.1/",
+  "version": "0.2.4",
+  "archivePrefix": "build-content/OnlyFenceStoryLine-0.2.4/",
   "content": {
-    "late-q05-q13.json": "c6c97c15c4182f53787087087e9c0cd1748efeb9802b7e9f574942ef196bb90f",
-    "late-q14-q22.json": "1ab2156ecb108339c4c24aaab7c745e7706d180da0b5ad989e12160b885928f0",
+    "late-q05-q13.json": "f73942d70b70d4c7d9fce4124142dbcf82dcb262da38cdffae512ac7882c074b",
+    "late-q14-q22.json": "a6129208cbbefdd1324a33bdee016a94d0aa4ac9630f79eb11721ca818d75bfa",
     "rewards-v018.json": "81a0ee8a915e424878d091af5feec99f8c348359adeca6664d3462783405a05f",
-    "source-content.json": "3daa587d37a0f7b873e0448a2f7883fc9219759ec2d266ea65c5265cd1dea5c0"
+    "source-content.json": "a1fe12d794ac7b2e687c9cfdd3d4c0360c1a858d2c01e5c13042b07a40dfffa8"
   },
   "sources": {
     "Client/ConversationPolicy.cs": {
@@ -22,7 +22,7 @@
       "utf8Bom": false
     },
     "Client/E17DocumentReader.cs": {
-      "sha256": "2340b35e163136bd1bb9a73ccc7884f3daf7087d98ee81bd248fde6453426ca4",
+      "sha256": "2b47decc0f42da0a93a2cb8b1f628b36d25d048e653146cc7068e713bb0c78b7",
       "utf8Bom": false
     },
     "Client/E17Text.cs": {
@@ -54,7 +54,7 @@
       "utf8Bom": false
     },
     "Client/LatePlacements.cs": {
-      "sha256": "65655136f92bfc8d86ab322072e98d58633c87dd5fb1d514ed03eebbd1ab7932",
+      "sha256": "1853ad416ca60ab388c0f45f008f0639c29235019fd4e99110102b85598c4e85",
       "utf8Bom": false
     },
     "Client/LatePolicy.cs": {
@@ -74,7 +74,7 @@
       "utf8Bom": false
     },
     "Client/NarrativePolicy.cs": {
-      "sha256": "35c4c18147fe9b2371929e4222936f7569ec382d397e39c21927d9d5efd732ee",
+      "sha256": "c0e2e7948353b1754ba8ae4957fe0dbde2ed9a23d3dbab17dc96b747d81f957d",
       "utf8Bom": false
     },
     "Client/NarrativeUI.cs": {
@@ -82,11 +82,11 @@
       "utf8Bom": false
     },
     "Client/ParcelStatusSync.cs": {
-      "sha256": "6a8e3aeecf2f37f58e78ecfa00968c93139e2a5d11259aef97fa7c4df3ba782f",
+      "sha256": "9ccd902758208d5feb491c5a7db846b896fa740941b200d90414648ff47f407f",
       "utf8Bom": false
     },
     "Client/Plugin.cs": {
-      "sha256": "9c94b1a4ee7b3488b4b2a7b2c3399a548a37e192e36f1a890bdeadb5ea229879",
+      "sha256": "4c2c78e1068658b1c3c599b2b9313801dc126f73313dee168caadd66d944ec9b",
       "utf8Bom": false
     },
     "Client/ProgressSync.cs": {
@@ -94,11 +94,11 @@
       "utf8Bom": false
     },
     "Client/Q1FlowPolicy.cs": {
-      "sha256": "b76d1fd71b119688fa297215a4488f22074b8d77db5b6fb983a278dd3a694b66",
+      "sha256": "35d71fee4de321479e8b89c15280f60f63d653d624af621383ba539e042cbf63",
       "utf8Bom": false
     },
     "Client/Q2Flow.cs": {
-      "sha256": "63964fca094f37e561e0d613e470bccf98f20f17c2387402b6218eb419bcd8f4",
+      "sha256": "056318cf15fe365f833ebdaf04d01c6384bdc4372cf91ca6dc1648665fdfb3c5",
       "utf8Bom": false
     },
     "Client/Q2PlacementFeedback.cs": {
@@ -106,15 +106,15 @@
       "utf8Bom": false
     },
     "Client/Q2Policy.cs": {
-      "sha256": "e1d261795d29cd15722a3727b79cb0d8d17f130571ab70d982390888e641c156",
+      "sha256": "ccbdcd86b1bd2bd4dc5906989f9924a5c1803d149150859b0fb7eff0a6f550df",
       "utf8Bom": false
     },
     "Client/Q3Flow.cs": {
-      "sha256": "5c60cf467ecc145c5fec2bfae6090f3cbf4fabd1388bfcbafa29c60dfe21f836",
+      "sha256": "eff4d8f79da556f69ed4eb71df8ee113cbee9ac0d71d54214d880dcd12b21212",
       "utf8Bom": false
     },
     "Client/Q3Policy.cs": {
-      "sha256": "57af83c82279ed252cae6a9cc4c71e22f4ed2987dded492c39608490e124b917",
+      "sha256": "fa16fc137c71450508d925a389269f0ff303a6d7af56499fe85f1764fdd1f65c",
       "utf8Bom": false
     },
     "Client/Q4ActionSync.cs": {
@@ -122,11 +122,11 @@
       "utf8Bom": false
     },
     "Client/Q4Flow.cs": {
-      "sha256": "8c67c57533d3c254846c27deb1c812fd7c20bd924c5b8b1b992a86c7800845fa",
+      "sha256": "db6a56b1973102f4f6365ac174e95a686329eacb10bd4b86661ed1acdfe7e6b9",
       "utf8Bom": false
     },
     "Client/Q4Policy.cs": {
-      "sha256": "8bd3c7846fe877c120ad1b5541d789a78d6b9d4f6975a2cb8f626744174ab870",
+      "sha256": "26ebafa5cec562ce48fa92652940949bf5999a8f0cbea19e96123d47c820617f",
       "utf8Bom": false
     },
     "Client/Q4RequestSync.cs": {
@@ -137,16 +137,20 @@
       "sha256": "3cc1796bf144419c3951d4da94efb196483fd6dc607526bf1c030211eabf0934",
       "utf8Bom": false
     },
+    "Client/StoryCounters.cs": {
+      "sha256": "901e2134482fd31c2e3a2f9ec235aed0a90887011f4fe3a021a8d39aed6009f8",
+      "utf8Bom": false
+    },
     "Client/VisitEntryPolicy.cs": {
       "sha256": "2a348763a40fc5393676f62ee501f06178e0da7cba990d5a5124005355e59f21",
       "utf8Bom": false
     },
     "Client/VisitFlow.cs": {
-      "sha256": "27b2ced7e3fa8afd0f0106488c9fae00bcde70307bcba4fc5d9b975246b3f558",
+      "sha256": "3af2ba6c7c7cc30796ced7a31d296fd4993c96be0c13904b89c6ed865ba0f100",
       "utf8Bom": false
     },
     "Client/VisitLoading.cs": {
-      "sha256": "02c906204a3aedcdae5c6f958a452902cfff495d39736a5e25d3819596ea2070",
+      "sha256": "9e26ad607c23314d0b43a1c738581b54819e575dee3d801660f65092762d8603",
       "utf8Bom": false
     },
     "Client/VisitLoadSequence.cs": {
@@ -169,6 +173,18 @@
       "sha256": "bd66ec78528410e6ef77970463da37de61b780c45c112e92eb7698d86eb18065",
       "utf8Bom": false
     },
+    "Server/JaegerAccess.cs": {
+      "sha256": "fa672605971b5bbb9b6935ea9ed72a89b6c5a832dd1385c2fb67d94d486650dc",
+      "utf8Bom": false
+    },
+    "Server/JaegerAccessLoader.cs": {
+      "sha256": "c5d291bee65dd4d01642a1edb150e9593d0d5dd4262bef897afa9af46d36a5ba",
+      "utf8Bom": false
+    },
+    "Server/JaegerAccessRouter.cs": {
+      "sha256": "9f072637e24d1d1ec23006e75fb9e6e7a50ee88e5586c9fdb77d99dfb944b7ac",
+      "utf8Bom": false
+    },
     "Server/LateInventoryDelta.cs": {
       "sha256": "24918b10e662e9cbf8a1a7f1939956995f4e86402827a9ced0226e9569f13082",
       "utf8Bom": false
@@ -178,11 +194,11 @@
       "utf8Bom": false
     },
     "Server/LatePolicy.cs": {
-      "sha256": "98f3b3277de480d89a251dfcb3074660701c802e205d896e4ba198887bf11d69",
+      "sha256": "c6962551272b4dc8ac8e4719cce92dbe7dc3a73244ae43047e11959f28c98d09",
       "utf8Bom": false
     },
     "Server/LateRouter.cs": {
-      "sha256": "a284a151c190132088a736cd9f8b29da24401547a8a214684994992a1de0336b",
+      "sha256": "78c032957542454e77609025ac6c862508d097707e9904872f0a7732d2faf59d",
       "utf8Bom": false
     },
     "Server/LateRules.cs": {
@@ -190,7 +206,7 @@
       "utf8Bom": false
     },
     "Server/LateService.cs": {
-      "sha256": "4cb058c01a23396ddeec5bdf269942299920f77e8eef583bda314b9b43bda88a",
+      "sha256": "c3f8a38fc65826b4653a0c91613691a80f0faf2d528d3cc184a49f960b04fc5c",
       "utf8Bom": false
     },
     "Server/LateTransaction.cs": {
@@ -198,7 +214,15 @@
       "utf8Bom": false
     },
     "Server/ModMetadata.cs": {
-      "sha256": "4e8b7cfc9dc93e605339eae9244562c89e1fbd3d36dfd3675a2c0c416129f3bd",
+      "sha256": "bf324535a816c5967aa3224507bbf52bb8e110d916f45ed16ea7125d8a839baf",
+      "utf8Bom": false
+    },
+    "Server/NarrativeMigration.cs": {
+      "sha256": "18cb8267d4db4b3626ca306f5243b42bcebafdbf46d6504fffeda47fb4c6b498",
+      "utf8Bom": false
+    },
+    "Server/NarrativeMigrationRouter.cs": {
+      "sha256": "55df56f3a8f3f01a7c1c33a6fc2777ee9ab7ed8db867331ee5d2de9758cf1def",
       "utf8Bom": false
     },
     "Server/ParcelInventoryMigrationPolicy.cs": {
@@ -210,15 +234,15 @@
       "utf8Bom": false
     },
     "Server/ParcelPolicy.cs": {
-      "sha256": "af0c48de289bce3b574f4e929aed7c91839c72d6610801ff33a836962f02e8d9",
+      "sha256": "098f167758ac9f2b8734d65d73f33a2af9311180897dd357283c890c4463c2a2",
       "utf8Bom": false
     },
     "Server/ParcelRouter.cs": {
-      "sha256": "f074b82e4871a9cf5bd9b4ea61791a8b44577bec86c1d8234feabbdc6c4d2483",
+      "sha256": "b952eb9b6ff9c512b8bc4dd22bd2f3fda54a5e266dd6739c31436942e5160cd5",
       "utf8Bom": false
     },
     "Server/ProgressRouter.cs": {
-      "sha256": "b076d349be563bf3f160acd82449e75779fada8d1b439ef048843d5b3bb77d99",
+      "sha256": "01e9ca16073ed2f03251d3f76cb6892ab699ef684a418e96f6615c2a84ebe8ab",
       "utf8Bom": false
     },
     "Server/Q2NoteCleanup.cs": {
@@ -226,7 +250,7 @@
       "utf8Bom": false
     },
     "Server/Q4Policy.cs": {
-      "sha256": "440e7062e536a41e67895167e6885ac02da6038328f1ef5f24611e923bbd5fe7",
+      "sha256": "97a2393394ad035954fd6f5501d0e2508466ad2b0f52608243d143d1a1461b1e",
       "utf8Bom": false
     },
     "Server/Q4Router.cs": {

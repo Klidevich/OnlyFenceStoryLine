@@ -39,7 +39,8 @@ internal static class Q4Flow
             Parcel = Q4RequestSync.State(qc)
         };
     }
-    internal static bool Available(QuestController qc) => Q4Policy.Available((int?)Q3Flow.Quest(qc)?.QuestStatus ?? 0, f => VisitFlow.Has(qc, f));
+    internal static bool Available(QuestController qc) => (int?)Quest(qc)?.QuestStatus is 2 or 3 or 4 ||
+        Q4Policy.Available((int?)Q3Flow.Quest(qc)?.QuestStatus ?? 0, f => VisitFlow.Has(qc, f));
     internal static bool Begun(QuestController qc) => VisitFlow.Has(qc, "q4ReadyV018") || Q4Policy.Briefed(f => VisitFlow.Has(qc, f)) || (int?)Quest(qc)?.QuestStatus is 2 or 3 or 4;
     internal static string Entry(QuestController qc) => Available(qc) ? Q4Policy.Entry(State(qc), f => VisitFlow.Has(qc, f)) : Q3Flow.Entry(qc);
     internal static bool Question(string target) => target is "e17_q4_wait" or "e17_q4_debt";

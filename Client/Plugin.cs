@@ -15,7 +15,7 @@ using VisitAPI.ChapterUI;
 namespace CustomQuests.E17;
 
 // Client integration for the content included in this release.
-[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.2.1")]
+[BepInPlugin("com.klidevich.customquests.e17", "OnlyFenceStoryLine", "0.2.4")]
 [BepInDependency("com.sora.visitapi")]
 [BepInDependency("com.onlyfence.client", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed class Plugin : BaseUnityPlugin
@@ -30,14 +30,14 @@ public sealed class Plugin : BaseUnityPlugin
     internal static readonly Dictionary<string, string> ItemQuests = new()
     {
         ["582c4d5c43fdd55ee98b20bc"] = "c50c495eb5a978728eaf9d59",
-        ["e208363938a46fbc1507af21"] = "c50c495eb5a978728eaf9d59",
         ["90eb63a906ed4dff2fbbf0d8"] = "b1e561de6727b0871dba91e9",
         [Q3Policy.Parts] = Q3Policy.QuestId,
         [Q3Policy.Books] = Q3Policy.QuestId,
         [Q4Policy.Claim] = Q4Policy.QuestId,
-        [Q4Policy.BusinessReply] = Q4Policy.QuestId,
         [Q4Policy.PersonalCopy] = Q4Policy.QuestId
     };
+    // Optional documents retain discovery without becoming mandatory native completion conditions.
+    internal static readonly Dictionary<string, string> OptionalDiscovery = new();
     InventoryController watched;
     QuestController controller;
     float nextRefresh;
@@ -55,12 +55,20 @@ public sealed class Plugin : BaseUnityPlugin
             Quests.Add(id);
             foreach (var condition in definition["conditions"])
                 if ((string)condition["type"] == "FindItem") ItemQuests[LatePolicy.Id((string)condition["item"])] = id;
+            foreach (var item in definition["items"])
+            {
+                var itemKey = (string)item["key"];
+                var template = LatePolicy.Id(itemKey);
+                if (item["location"] == null || ItemQuests.ContainsKey(template)) continue;
+                ItemQuests[template] = id;
+                OptionalDiscovery[template] = LatePolicy.Id(itemKey.Replace("/item/", "/find/"));
+            }
         }
         E17Text.Lookup = source => VisitAPI.Loc.Key(E17Text.Prefix + source) ?? source;
         harmony = new Harmony("com.klidevich.customquests.e17");
         harmony.PatchAll(typeof(Plugin).Assembly);
         LateTradeAccess.Install(harmony);
-        Logger.LogInfo("OnlyFenceStoryLine runtime 0.2.1 Beta loaded; Russian, English and Korean localization.");
+        Logger.LogInfo("OnlyFenceStoryLine runtime 0.2.4 Beta loaded; Russian, English and Korean localization.");
     }
 
     void OnDestroy()
@@ -141,6 +149,10 @@ public sealed class Plugin : BaseUnityPlugin
         foreach (var q in qc.Quests.Where(q => Quests.Contains(q.Id) && Running(q)).ToList())
         {
             var changed = false;
+            foreach (var optional in OptionalDiscovery.Where(p => ItemQuests[p.Key] == q.Id && held.Contains(p.Key)))
+            {
+                changed |= StoryCounters.Mark(qc.Profile, q.Id, optional.Value, "FindItem");
+            }
             foreach (var c in q.GetConditions<ConditionFindItem>(EQuestStatus.AvailableForFinish))
             {
                 if (!c.target.Any(t => ItemQuests.TryGetValue(t, out var owner) && owner == q.Id)) continue;
@@ -171,8 +183,10 @@ public sealed class Plugin : BaseUnityPlugin
     }
 
     internal static bool Found(Quest q, string tpl, Profile profile) =>
-        profile != null && q != null && q.GetConditions<ConditionFindItem>(EQuestStatus.AvailableForFinish)
-            .Where(c => c.target.Contains(tpl)).Any(c => profile.GetTaskConditionCounter(q, c.id).Value >= 1);
+        profile != null && q != null && (OptionalDiscovery.TryGetValue(tpl, out var optional) &&
+            ItemQuests.TryGetValue(tpl, out var owner) && owner == q.Id && StoryCounters.Value(profile, q.Id, optional) >= 1 ||
+            q.GetConditions<ConditionFindItem>(EQuestStatus.AvailableForFinish)
+                .Where(c => c.target.Contains(tpl)).Any(c => profile.GetTaskConditionCounter(q, c.id).Value >= 1));
 
     [HarmonyPatch(typeof(QuestOps), nameof(QuestOps.Finish))]
     static class KeepChapterOpen

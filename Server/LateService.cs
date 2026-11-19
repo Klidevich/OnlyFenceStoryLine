@@ -269,7 +269,7 @@ public sealed class LateService(ProfileHelper profiles, SaveServer saves, Templa
         if (!root.TryGetProperty("serverId", out var id) || id.ValueKind != JsonValueKind.String) throw new InvalidOperationException("Native raid start has no serverId");
         var profile = profiles.GetFullProfile(session) ?? throw new InvalidOperationException("E17 raid profile missing");
         var ledger = Read(profile);
-        ledger.ActiveRaidId = id.GetString()!;
+        LatePolicy.StartRaid(ledger, new LateNativeState(profile, ledger, DateTimeOffset.UtcNow.ToUnixTimeSeconds()), id.GetString()!);
         ledger.Revision++;
         await LateTransaction.Run(profile, cloner, () => { Write(profile, ledger); return Task.FromResult(true); }, async () => { await saves.SaveProfileAsync(session, ct); });
         return true;

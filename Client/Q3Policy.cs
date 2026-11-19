@@ -15,12 +15,13 @@ internal static class Q3Policy
         "e17_q3_payment_resume" or "e17_q3_ransom_resume";
     internal static readonly Dictionary<string, string> Facts = new()
     {
-        ["e17_q3_ready"] = "q3Rudin",
+        ["e17_q3_ready"] = "q3Brief",
         ["e17_q3_instructions"] = "q3Brief", ["e17_q3_condition"] = "q3Condition",
         ["e17_q3_parts_first"] = "q3PartsAcknowledged", ["e17_q3_parts_second"] = "q3PartsAcknowledged",
         ["e17_q3_books_first"] = "q3BooksAcknowledged", ["e17_q3_books_second"] = "q3BooksAcknowledged",
         ["e17_q3_paid"] = "q3PaidShown", ["e17_q3_payment"] = "q3Payment",
-        ["e17_q3_ransom"] = "q3ClosedAccountV018", ["e17_q3_expenses"] = "q3Expenses"
+        ["e17_q3_ransom"] = "q3ClosedAccountV018", ["e17_q3_expenses"] = "q3Expenses",
+        ["e17_q3_driver"] = "q3DriverV027"
     };
     internal static bool Active(int status) => status is 2 or 3;
     internal static bool Available(int previousStatus, Func<string, bool> has) =>
@@ -47,7 +48,7 @@ internal static class Q3Policy
             if (booksGiven && !has("q3BooksAcknowledged")) return HandoverTarget(false, partsGiven);
             return ActiveEntry(partsGiven, booksGiven);
         }
-        return has("q3Brief") ? "e17_q3_offer" : has("q3Rudin") ? "e17_q3_resume" : "e17_q3_ready";
+        return has("q3Brief") ? "e17_q3_offer" : "e17_q3_ready";
     }
 
     internal static bool Allowed(string target, int status, bool partsGiven, bool booksGiven,
@@ -58,7 +59,7 @@ internal static class Q3Policy
         switch (target)
         {
             case "e17_q3_ready": return status is 0 or 1;
-            case "e17_q3_instructions": return status is 0 or 1 && has("q3Rudin");
+            case "e17_q3_instructions": return status is 0 or 1;
             case "e17_q3_accepted": return status == 1 && has("q3Brief");
             // Legacy joke facts remain stored, but never count as the new condition answer.
             case "e17_q3_name":
@@ -68,6 +69,7 @@ internal static class Q3Policy
             // The old acknowledgement remains a stored fact; the new dialogue goes straight to the ransom answer.
             case "e17_q3_payment": return false;
             case "e17_q3_ransom": return status == 4 && has("q3PaidShown");
+            case "e17_q3_driver": return status == 4 && has("q3ClosedAccountV018");
             case "e17_q3_expenses": return false;
         }
         if (target.StartsWith("e17_q3_active_", StringComparison.Ordinal))
@@ -87,6 +89,7 @@ internal static class Q3Policy
         if (fact == "q3PaidShown") return status == 4;
         if (fact == "q3Payment") return false;
         if (fact == "q3ClosedAccountV018") return status == 4 && has("q3PaidShown");
+        if (fact == "q3DriverV027") return status == 4 && has("q3ClosedAccountV018");
         if (fact == "q3Expenses") return false;
         return true;
     }
@@ -94,7 +97,6 @@ internal static class Q3Policy
     internal static string Journal(int status, bool partsGiven, bool booksGiven, Func<string, bool> has, bool partsFound = false)
     {
         var p = new List<string>();
-        if (has("q3Rudin")) p.Add(E17Text.Get("t0038ac873734c899"));
         if (has("q3Brief")) p.Add(E17Text.Get("t99608e57497999cf") + "\n\n" +
             (Active(status) || status == 4 ? E17Text.Get("tcbcbfbd3809b1c0c") : E17Text.Get("t38d9758932b13476")));
         if (partsFound && !partsGiven) p.Add(E17Text.Get("td44bcd4bbd9eb317"));
@@ -106,7 +108,7 @@ internal static class Q3Policy
         if (status == 4)
         {
             p.Add(E17Text.Get("ted0fe3b82e61ccf8"));
-            if (has("q3ClosedAccountV018")) p.Add(E17Text.Get("tfc0dbd52a42a5dd6"));
+            if (has("q3DriverV027")) p.Add(E17Text.Get("tfc0dbd52a42a5dd6"));
         }
         return p.Count == 0 ? "" : E17Text.Get("t41a517bb24bce4ad") + string.Join("\n\n", p);
     }

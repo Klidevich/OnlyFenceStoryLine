@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using EFT;
+using EFT.Communications;
 using EFT.Quests;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -16,6 +19,7 @@ internal static class ParcelStatusSync
     static ParcelAvailability value;
     static float retryAt, expiresAt;
     static int generation;
+    static readonly HashSet<string> appliedPayments = new();
 
     internal static ParcelAvailability State(QuestController qc) => ReferenceEquals(qc, owner) &&
         Time.unscaledTime < expiresAt ? value : ParcelAvailability.Unknown;
@@ -56,18 +60,30 @@ internal static class ParcelStatusSync
             if (version != generation || !ReferenceEquals(owner, captured) ||
                 !QuestOps.IsLobby(captured) || !QuestOps.IsLive(captured)) yield break;
             if (replace) Notify();
-            var body = new JObject { ["profileId"] = captured.Profile.Id }.ToString();
+            var transaction = Guid.NewGuid().ToString("N");
+            var body = new JObject { ["profileId"] = captured.Profile.Id, ["transactionId"] = transaction }.ToString();
             call = VisitHttp.Call("/customquests/e17/parcel/" + (replace ? "replace" : "status"), body, raw =>
             {
                 try
                 {
                     var data = JObject.Parse(raw)["data"];
                     if ((string)data?["profileId"] != captured.Profile.Id) return false;
+                    var paymentKey = captured.Profile.Id + ":" + (string)data["transactionId"];
+                    if (replace && data["inventoryEffect"] is JObject effect && !appliedPayments.Contains(paymentKey))
+                    {
+                        if (captured is not QuestControllerClientBackend backend || backend.iQuestSession is not ClientBackendSession session)
+                            return false;
+                        LateInventoryApply.Apply(session, captured.Profile.Id, effect); appliedPayments.Add(paymentKey);
+                    }
                     switch ((string)data["status"])
                     {
                         case "Replace": next = replace ? ParcelAvailability.PendingMail : ParcelAvailability.Missing; break;
                         case "PendingMail": next = ParcelAvailability.PendingMail; break;
                         case "Owned": next = ParcelAvailability.Owned; break;
+                        case "InsufficientFunds":
+                            next = ParcelAvailability.Missing;
+                            NotificationManager.DisplayMessageNotification(E17Text.Get("t0270000000000201"));
+                            break;
                         case "NotActive": case "Placed": case "MissingProfile": next = ParcelAvailability.Unavailable; break;
                         default: return false;
                     }

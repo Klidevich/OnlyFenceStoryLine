@@ -70,14 +70,10 @@ internal static class VisitFlow
     internal static Quest First(QuestController qc) => qc?.Quests?.GetConditional(VisitEntryPolicy.FirstQuestId);
     internal static bool NeedsQ4Admission(QuestController qc)
     {
-        if (Q4Flow.Quest(qc)?.QuestStatus != EQuestStatus.Success || Has(qc, "q4AdmissionEndV022")) return false;
-        // Existing late actions and actually shown late dialogue are a migration
-        // boundary. Never roll them back or manufacture the missing admission.
-        if (LatePolicy.Quests.Any(definition => LateFlow.Quest(qc, (string)definition["key"])?.QuestStatus is
-            EQuestStatus.Started or EQuestStatus.AvailableForFinish or EQuestStatus.Success)) return false;
-        foreach (var node in LatePolicy.Nodes.Values)
-            if (node["shown"] != null && node["shown"].Any(fact => Has(qc, (string)fact))) return false;
-        return true;
+        // Only an explicitly begun, interrupted exchange warrants a reminder.
+        // Neither the unasked accusation nor its ending gates subsequent work.
+        return Q4Flow.Quest(qc)?.QuestStatus == EQuestStatus.Success &&
+            Has(qc, "q4AdmissionV022") && !Has(qc, "q4AdmissionEndV022");
     }
     internal static bool Given(Quest q, string tpl) => q != null && q.GetConditions<ConditionHandoverItem>(EQuestStatus.AvailableForFinish)
         .Any(c => c.target.Contains(tpl) && q.IsConditionDone(c));
@@ -88,14 +84,12 @@ internal static class VisitFlow
         q?.QuestStatus != EQuestStatus.Started || qc?.InventoryController?.Inventory == null ? null :
         q.ProgressCheckers.Keys.OfType<ConditionHandoverItem>()
             .Where(c => q.CheckVisibilityStatus(c) && !q.IsConditionDone(c))
-            .Where(c => q.Id != Q4Policy.QuestId || !c.target.Contains(Q4Policy.BusinessReply) || Has(qc, "q4BusinessExtracted"))
+            .Where(c => q.Id != Q4Policy.QuestId || !c.target.Contains(Q4Policy.BusinessReply))
             .FirstOrDefault(c => qc.GetItemsForCondition(c)?.Length > 0);
 
     static bool Allowed(DialogOption option, QuestController qc)
     {
         var q = First(qc); var target = option.Target;
-        if (NeedsQ4Admission(qc) && (LatePolicy.Node(target) != null ||
-            option.AcceptIds.Any(id => LatePolicy.Quest(id) != null))) return false;
         if (!ConversationPolicy.Allowed(target, option.AcceptIds.Count > 0 || option.CompleteIds.Count > 0 ||
             option.HandoverId != null, key => Has(qc, key))) return false;
         if (!Q2Flow.Allowed(option, qc)) return false;
@@ -105,7 +99,7 @@ internal static class VisitFlow
         if (option.AcceptIds.Contains(VisitEntryPolicy.FirstQuestId) && !Q1FlowPolicy.CanAccept(key => Has(qc, key))) return false;
         if (option.CompleteIds.Contains(VisitEntryPolicy.FirstQuestId) && !Has(qc, "q1RadioV018")) return false;
         if (target is "e17_q1_separate" or "e17_q1_person")
-            return q?.QuestStatus == EQuestStatus.Started && !Given(q, NarrativePolicy.Ticket) && !Given(q, NarrativePolicy.Radio);
+            return false;
         if (target == "e17_resume") return VisitEntryPolicy.NeedsBriefing((int?)q?.QuestStatus ?? 0) && !Q1FlowPolicy.CanAccept(key => Has(qc, key));
         if (target == "e17_offer") return q?.QuestStatus == EQuestStatus.AvailableForStart && Q1FlowPolicy.CanAccept(key => Has(qc, key));
         if (target?.StartsWith("e17_active_", StringComparison.Ordinal) == true)
@@ -114,9 +108,8 @@ internal static class VisitFlow
         if (target is "e17_report" or "e17_no_finds")
         {
             var active = q != null && q.QuestStatus is EQuestStatus.Started or EQuestStatus.AvailableForFinish;
-            var ready = active && ((!Given(q, NarrativePolicy.Ticket) && Held(qc, NarrativePolicy.Ticket)) ||
-                (!Given(q, NarrativePolicy.Radio) && Held(qc, NarrativePolicy.Radio)));
-            return target == "e17_report" ? ready : active && !ready && !(Given(q, NarrativePolicy.Ticket) && Given(q, NarrativePolicy.Radio));
+            var ready = active && !Given(q, NarrativePolicy.Ticket) && Held(qc, NarrativePolicy.Ticket);
+            return target == "e17_report" ? ready : active && !ready && !Given(q, NarrativePolicy.Ticket);
         }
         if (target is "e17_q2_entry" or "e17_q2_continue")
         {
@@ -128,11 +121,7 @@ internal static class VisitFlow
         if (option.HandoverId == VisitEntryPolicy.FirstQuestId)
         {
             if (q?.QuestStatus != EQuestStatus.Started) return false;
-            var ticket = target.StartsWith("e17_ticket_", StringComparison.Ordinal);
-            var tpl = ticket ? NarrativePolicy.Ticket : NarrativePolicy.Radio;
-            if (Given(q, tpl) || !Held(qc, tpl)) return false;
-            return target == NarrativePolicy.HandoverTarget(ticket, Given(q, ticket ? NarrativePolicy.Radio : NarrativePolicy.Ticket),
-                Plugin.Found(q, NarrativePolicy.Radio, qc.Profile), Held(qc, NarrativePolicy.Radio));
+            return target == "e17_radio_second" && !Given(q, NarrativePolicy.Ticket) && Held(qc, NarrativePolicy.Ticket);
         }
         if (target is "e17_done_new" or "e17_done_ready")
         {
@@ -157,7 +146,9 @@ internal static class VisitFlow
     {
         static void Postfix(DialogOption o, QuestController quests, ref DialogMainConditionGroup __result)
         {
-            if (o.Target?.StartsWith("e17_", StringComparison.Ordinal) != true && LatePolicy.Node(o.Target) == null) return;
+            if (o.Target?.StartsWith("e17_", StringComparison.Ordinal) != true && LatePolicy.Node(o.Target) == null &&
+                !o.AcceptIds.Any(id => Plugin.Quests.Contains(id)) && !o.CompleteIds.Any(id => Plugin.Quests.Contains(id)) &&
+                !SpecificHandover(o.HandoverId)) return;
             __result = new DialogMainConditionGroup(new[] { new DialogConditionSubGroup(new List<DialogCondition>
                 { new PresentationGate(o, quests, __result) }) });
         }
@@ -173,21 +164,14 @@ internal static class VisitFlow
         static void Prefix(DialogTree tree, QuestController quests, bool scene, ref string forceNode)
         {
             if (!OurTree(tree) || !QuestOps.IsLobby(quests)) return;
-            if (NeedsQ4Admission(quests) && (forceNode == null || LatePolicy.Node(forceNode) != null))
-            {
-                // Room access keeps its original threshold. Other participants open
-                // their ordinary topic menu until this new Q4 ending is shown.
-                forceNode = tree.TraderId == VisitEntryPolicy.FenceId ? Q4Flow.Entry(quests) : "e17_root";
-                return;
-            }
             if (forceNode != null) return;
             var late = LateFlow.Entry(quests, tree.TraderId);
             if (late != null) { forceNode = late; return; }
             if (tree.TraderId != VisitEntryPolicy.FenceId) return;
             var q = First(quests);
-            if (Given(q, NarrativePolicy.Radio) && !Has(quests, "q1RadioV018"))
+            if (Given(q, NarrativePolicy.Ticket) && !Has(quests, "q1RadioV018"))
             {
-                forceNode = Given(q, NarrativePolicy.Ticket) ? "e17_radio_second" : "e17_radio_first";
+                forceNode = "e17_radio_second";
                 return;
             }
             if (VisitEntryPolicy.NeedsBriefing((int?)q?.QuestStatus ?? 0))
@@ -243,7 +227,7 @@ internal static class VisitFlow
             }
             var q = First(quests);
             if (node.StartsWith("e17_ticket_") && !Given(q, NarrativePolicy.Ticket) ||
-                node.StartsWith("e17_radio_") && !Given(q, NarrativePolicy.Radio) ||
+                node.StartsWith("e17_radio_") && !Given(q, NarrativePolicy.Ticket) ||
                 fact == "finished" && q?.QuestStatus != EQuestStatus.Success) return;
             marked |= Mark(quests, fact);
             if (node is "e17_radio_first" or "e17_radio_second") marked |= Mark(quests, "q1RadioV018");
@@ -359,7 +343,7 @@ internal static class VisitFlow
             ? (option.Target == "e17_q4_claim" ? Q4Policy.Claim : Q4Policy.BusinessReply)
             : option.HandoverId == Q3Policy.QuestId
             ? (option.Target.StartsWith("e17_q3_parts_", StringComparison.Ordinal) ? Q3Policy.Parts : Q3Policy.Books)
-            : (option.Target.StartsWith("e17_ticket_", StringComparison.Ordinal) ? NarrativePolicy.Ticket : NarrativePolicy.Radio);
+            : NarrativePolicy.Ticket;
         var condition = q.GetConditions<ConditionHandoverItem>(EQuestStatus.AvailableForFinish).Single(c => c.target.Contains(tpl));
         var items = qc.GetItemsForCondition(condition);
         if (items == null || items.Length == 0) return;
@@ -412,8 +396,7 @@ internal static class VisitFlow
             {
                 if (q.QuestStatus == EQuestStatus.Success) __result = NeedsQ4Admission(qc);
                 else if (q.QuestStatus == EQuestStatus.AvailableForFinish)
-                    __result &= Q4Flow.RepliesReady(qc) && Has(qc, "q4PersonalExtracted") && Has(qc, "q4CopyRead") &&
-                        Given(q, Q4Policy.BusinessReply);
+                    __result &= Q4Flow.RepliesReady(qc) && Has(qc, "q4PersonalExtracted") && Has(qc, "q4CopyRead");
             }
             return false;
         }

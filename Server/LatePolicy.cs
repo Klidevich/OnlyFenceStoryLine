@@ -15,6 +15,7 @@ public sealed class LateLedger
     public string SettlementIntent { get; set; } = "unknown";
     public long RaidSequence { get; set; }
     public string ActiveRaidId { get; set; } = "";
+    public string LettersDeliveryRaidId { get; set; } = "";
     public HashSet<string> EndedRaids { get; set; } = new(StringComparer.Ordinal);
     public HashSet<string> Flags { get; set; } = new(StringComparer.Ordinal);
     public HashSet<string> MirroredFlags { get; set; } = new(StringComparer.Ordinal);
@@ -45,6 +46,7 @@ public sealed class LateReservation
     public string OperationId { get; set; } = "";
     public string RefundOperationId { get; set; } = "";
     public bool FinalDeposited { get; set; }
+    public int DisclosureGeneration { get; set; }
 }
 
 public sealed record LateOperation(string Fingerprint, string Code, JsonElement? InventoryEffect = null);
@@ -112,14 +114,14 @@ public static class LatePolicy
         if (s.Version != 1) return Fail("UnsupportedLedgerVersion");
         if (s.Operations.TryGetValue(c.OperationId, out var prior))
             return prior.Fingerprint == c.Fingerprint ? new(true, "Replayed", fx) : Fail("OperationConflict");
-        if (!string.IsNullOrEmpty(s.ActiveRaidId)) return Fail("LobbyRequired");
+        if (!string.IsNullOrEmpty(s.ActiveRaidId) && !(c.Action == "DispatchMessage" && c.Subject == "q16.familyQuestions")) return Fail("LobbyRequired");
         bool During(string q) => n.Active(q) || n.Success(q);
         bool Conditions(params string[] keys) => keys.All(n.Done);
         switch (c.Action)
         {
             case "CommitQ7Settlement":
                 if (c.Subject != "q7" || c.Choice is not ("cash" or "tools")) return Fail("InvalidAction");
-                if (!n.Active("q7") || !Conditions("q7/give/transportReturnLog", "q7/give/rudinTools", "q7/find/transportRefusal")) return Fail("NotReady");
+                if (!n.Active("q7") || !Conditions("q7/give/rudinTools")) return Fail("NotReady");
                 if (s.Choice7 != "unknown" && s.Choice7 != c.Choice) return Fail("AlreadyChosen");
                 // This is only an intent. Final choice and cash entitlement are committed by native QuestComplete.
                 s.SettlementIntent = c.Choice;
@@ -187,7 +189,7 @@ public static class LatePolicy
                 if (c.Subject != "q20" || !n.Active("q20") || !s.Flags.Contains("q20.repairConfirmed")) return Fail("NotReady");
                 if (Locked(s)) return Fail("Irreversible");
                 if (!BothStored(s)) return Fail("RecallPending");
-                if (!n.Fact("late_q20_moneyConfirmed") || !n.Fact("late_q20_disclosureConfirmed") || !n.Fact("late_q20_refusalConfirmed")) return Fail("ConsentRequired");
+                if (!n.Fact("late_q20_authorizationRead")) return Fail("ConsentRequired");
                 if (s.Reservation.Status == "Reserved") break;
                 if (n.Roubles < LateIds.Ransom) return Fail("InsufficientFunds");
                 s.Reservation.Generation++;
@@ -196,8 +198,15 @@ public static class LatePolicy
                 s.Reservation.OperationId = c.OperationId;
                 s.Reservation.IssuedAfterRaid = s.RaidSequence;
                 s.Reservation.RefundOperationId = "";
+                s.Reservation.DisclosureGeneration = 0;
                 fx.Debit = LateIds.Ransom;
                 // Issuance is recoverable and separate; a crash after reserve cannot cause a second debit.
+                break;
+            case "ConfirmFinalDisclosure":
+                if (c.Subject != "q20" || !n.Active("q20") || Locked(s)) return Fail("NotReady");
+                if (c.ExpectedGeneration != s.Reservation.Generation) return Fail("StaleGeneration");
+                if (s.Reservation.Status != "Reserved" || !BothStored(s) || !n.Fact("late_q20_authorizationRead")) return Fail("NotReady");
+                s.Reservation.DisclosureGeneration = s.Reservation.Generation;
                 break;
             case "CancelAuthorization":
                 if (c.Subject != "q20") return Fail("InvalidAction");
@@ -220,6 +229,7 @@ public static class LatePolicy
         s.Reservation.Status = "Refunded";
         s.Reservation.RefundOperationId = operation;
         s.Reservation.Amount = 0;
+        s.Reservation.DisclosureGeneration = 0;
     }
 
     public static bool CanIssue(LateLedger s, ILateNativeState n, string key) => key switch
@@ -227,7 +237,7 @@ public static class LatePolicy
         "q11/item/severReplyEnvelope" => n.Active("q11") && n.Done("q11/find/severLetter") && !n.Done("q11/place/severReplyEnvelope"),
         "q18/item/familyClosedCopy" => s.Flags.Contains("q18.storageEnabled") && !Locked(s) && s.Custody["family"].Status is "Missing" or "Returned",
         "q18/item/reserveClosedCopy" => s.Flags.Contains("q18.storageEnabled") && !Locked(s) && s.Custody["reserve"].Status is "Missing" or "Returned",
-        "q20/item/finalAuthorization" => n.Active("q20") && s.Reservation.Status == "Reserved" && !Locked(s) && BothStored(s),
+        "q20/item/finalAuthorization" => n.Active("q20") && s.Reservation.Status == "Reserved" && !Locked(s) && BothStored(s) && DisclosureConfirmed(s),
         "q22/item/antonFamilyPacket" => n.Active("q22") && !n.Done("q22/place/antonFamilyPacket"),
         _ => false
     };
@@ -244,7 +254,9 @@ public static class LatePolicy
         if (visit)
         {
             foreach (var c in s.Custody.Values.Where(x => x.Status == "RecallPending")) c.ReturnReady = true;
-            Receipt("q16.answersVerified", n.Done("q16/give/threeNameReplies"));
+            // Dispatching the letters starts a separate interval; polling the menu cannot deliver them.
+            if (n.Done("q16/give/threeNameReplies") && !s.Flags.Contains("q16.answersVerified"))
+                s.Dispatches.TryAdd("q16.lettersToFamily", s.RaidSequence);
             var supplies = n.Done("q18/give/nutritionKit") && n.Done("q18/give/threePersonReception");
             Receipt("q18.suppliesReceived", supplies);
             Receipt("q18.cityTransportConfirmed", supplies);
@@ -267,11 +279,26 @@ public static class LatePolicy
         }
     }
 
+    public static void StartRaid(LateLedger s, ILateNativeState n, string raidId)
+    {
+        if (n.Done("q16/give/threeNameReplies") && !s.Flags.Contains("q16.answersVerified"))
+            s.Dispatches.TryAdd("q16.lettersToFamily", s.RaidSequence);
+        s.ActiveRaidId = raidId;
+        s.LettersDeliveryRaidId = s.Dispatches.ContainsKey("q16.lettersToFamily") &&
+            n.Done("q16/give/threeNameReplies") && !s.Flags.Contains("q16.answersVerified") ? raidId : "";
+    }
+
+    public static bool DisclosureConfirmed(LateLedger s) => s.Reservation.Generation > 0 &&
+        s.Reservation.DisclosureGeneration == s.Reservation.Generation;
+
     public static bool RecordRaid(LateLedger s, ILateNativeState n, string raidId)
     {
         if (string.IsNullOrWhiteSpace(raidId) || !s.EndedRaids.Add(raidId)) return false;
         s.RaidSequence++;
         s.ActiveRaidId = "";
+        if (s.LettersDeliveryRaidId == raidId && n.Done("q16/give/threeNameReplies"))
+            s.Flags.Add("q16.answersVerified");
+        s.LettersDeliveryRaidId = "";
         if (s.Dispatches.TryGetValue("q16.familyQuestions", out var sent) && s.RaidSequence > sent) s.Flags.Add("q16.answersReady");
         if (n.Done("q11/place/severReplyEnvelope")) s.Flags.Add("q11.replyDelivered");
         if (n.Done("q17/place/transportStretcher")) s.Flags.Add("q17.deliveryConfirmed");
@@ -282,7 +309,7 @@ public static class LatePolicy
         if (n.Done("q20/place/startingKit")) s.Flags.Add("q20.repairConfirmed");
         var r = s.Reservation;
         // The per-generation proof is required even for the first final plant: a stale package cannot authorize a new reserve.
-        if (r.Status == "Reserved" && !r.FinalDeposited && BothStored(s) && s.RaidSequence > r.IssuedAfterRaid &&
+        if (r.Status == "Reserved" && !r.FinalDeposited && BothStored(s) && DisclosureConfirmed(s) && s.RaidSequence > r.IssuedAfterRaid &&
             n.Done(AuthorizationProof(r.Generation)) && n.Done("q20/place/finalAuthorization"))
         { r.FinalDeposited = true; r.Status = "Dispatched"; s.Flags.Add("q20.linkReceived"); }
         if (n.Done("q22/place/antonFamilyPacket")) s.Flags.Add("q22.replyReady");
@@ -306,7 +333,8 @@ public static class LatePolicy
         if (s.Flags.Contains("q18.storageEnabled") && s.Custody["family"].Generation > 1 && s.Custody["family"].Status == "Returned" && !Locked(s)) flags.Add("q18.familyCanRedeliver");
         if (s.SettlementIntent is "cash" or "tools" && n.Active("q7")) flags.Add("q7.settlementReady");
         if (s.Reservation.Status == "Reserved") flags.Add("q20.reserved");
-        if (s.Reservation.Status == "Reserved" && !s.Reservation.FinalDeposited && BothStored(s) && s.Flags.Contains("q20.repairConfirmed")) flags.Add("q20.finalDeliveryAvailable");
+        if (s.Reservation.Status == "Reserved" && DisclosureConfirmed(s)) flags.Add("q20.disclosureConfirmed");
+        if (s.Reservation.Status == "Reserved" && DisclosureConfirmed(s) && !s.Reservation.FinalDeposited && BothStored(s) && s.Flags.Contains("q20.repairConfirmed")) flags.Add("q20.finalDeliveryAvailable");
         if (s.Reservation.FinalDeposited) flags.Add("q20.finalDeposited");
         if (CanIssue(s, n, "q11/item/severReplyEnvelope") && n.Parcel("q11/item/severReplyEnvelope") == "Missing") flags.Add("q11.parcelMissing");
         if (CanIssue(s, n, "q20/item/finalAuthorization") && n.Parcel("q20/item/finalAuthorization") == "Missing") flags.Add("q20.authorizationMissing");

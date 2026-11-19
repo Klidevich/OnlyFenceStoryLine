@@ -3,7 +3,7 @@
     <TargetFramework>net472</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AssemblyName>CustomQuests.E17</AssemblyName>
-    <Version>0.2.1</Version>
+    <Version>0.2.4</Version>
     <Managed>$(GamePath)\EscapeFromTarkov_Data\Managed</Managed>
   </PropertyGroup>
   <ItemGroup>

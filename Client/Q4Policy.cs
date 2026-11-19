@@ -32,15 +32,14 @@ internal static class Q4Policy
     };
     internal static bool Active(int status) => status is 2 or 3;
     internal static bool Briefed(Func<string, bool> has) => has("q4ReadyV018") && has("q4BriefV018");
-    internal static bool Available(int previousStatus, Func<string, bool> has) => previousStatus == 4 && has("q3ClosedAccountV018");
+    internal static bool Available(int previousStatus, Func<string, bool> has) => previousStatus == 4 && has("q3DriverV027");
     internal static string Entry(Q4State s, Func<string, bool> has)
     {
-        if (s.Status == 4) return !has("q4PaidShown") ? "e17_q4_paid" : !has("q4AdmissionV022") ? "e17_q4_paid" :
-            !has("q4AdmissionEndV022") ? "e17_q4_admission" : "e17_q4_after";
+        if (s.Status == 4) return !has("q4PaidShown") ? "e17_q4_paid" :
+            has("q4AdmissionV022") && !has("q4AdmissionEndV022") ? "e17_q4_admission" : "e17_q4_after";
         if (Active(s.Status))
         {
             if (s.ClaimGiven && !has("q4ClaimAcknowledged")) return "e17_q4_claim";
-            if (s.BusinessGiven && !has("q4BusinessAcknowledged")) return "e17_q4_business";
             return "e17_q4_active";
         }
         return Briefed(has) ? "e17_q4_offer" : has("q4ReadyV018") ? "e17_q4_instructions" : "e17_q4_ready";
@@ -61,8 +60,8 @@ internal static class Q4Policy
                 !has("q4Received") && s.Parcel == ParcelAvailability.Missing;
             case "e17_q4_replace": return s.Status == 2 && s.ClaimGiven && !s.Placed && !s.RequestHeld &&
                 has("q4Received") && s.Parcel == ParcelAvailability.Missing;
-            case "e17_q4_business": return Active(s.Status) && s.RepliesReady && s.BusinessExtracted && !s.BusinessGiven && s.BusinessHeld;
-            case "e17_q4_paid": return s.Status == 3 && s.BusinessGiven && s.PersonalExtracted && s.CopyRead && s.RepliesReady;
+            case "e17_q4_business": return false;
+            case "e17_q4_paid": return s.Status == 3 && s.PersonalExtracted && s.CopyRead && s.RepliesReady;
             case "e17_q4_admission": return s.Status == 4 && has("q4PaidShown");
             case "e17_q4_admission_end": return s.Status == 4 && has("q4AdmissionV022");
             case "e17_q4_active": return Active(s.Status);
@@ -97,10 +96,8 @@ internal static class Q4Policy
             return E17Text.Get("td4ff757bacdc199b");
         }
         if (!s.RepliesReady) return E17Text.Get(s.Attached ? "tc0a349ea1e872088" : "t390849096bb8582e");
-        if (s.BusinessGiven && s.PersonalExtracted && s.CopyRead) return E17Text.Get("tc4921eb7909d2fad");
+        if (s.PersonalExtracted && s.CopyRead) return E17Text.Get("tc4921eb7909d2fad");
         var p = new List<string>();
-        if (!s.BusinessGiven) p.Add(E17Text.Get(s.BusinessHeld ? s.BusinessExtracted ? "t344364d38d0a2537" : "t17656b48d6b20d2f" :
-            s.BusinessExtracted ? "t1afe6b9a0f7e4576" : "t09ae13c9a5b45013"));
         if (!s.PersonalExtracted) p.Add(E17Text.Get(s.PersonalFound ? "te549f60f8a3e97ea" : "t5573809b47271fb0"));
         if (!s.CopyRead && (s.PersonalFound || s.PersonalExtracted)) p.Add(E17Text.Get("t5704b1564c831db9"));
         return string.Join("\n", p);
@@ -121,15 +118,10 @@ internal static class Q4Policy
         if (s.Placed && s.Attached && !s.RepliesReady) p.Add(E17Text.Get("tc0a349ea1e872088"));
         if (s.RepliesReady) p.Add(E17Text.Get("t9795c5e2feb72b51"));
         if (s.FailedAttempt) p.Add(E17Text.Get("t4ccb5b846c05397b"));
-        if (s.BusinessFound && !s.BusinessGiven) p.Add(E17Text.Get("t7f525b9a9c24794d"));
-        if ((s.BusinessFound || s.BusinessGiven) && !s.PersonalFound) p.Add(E17Text.Get("teee23fb91b5b214c"));
-        if (s.CopyRead) p.Add(E17Text.Get("tb3f6f0b202adf8c4"));
-        if (s.BusinessGiven) p.Add(E17Text.Get("t2fe06fc1b41d6526"));
+        if (s.CopyRead) p.Add(E17Text.Get(has("q4AdmissionV022") ? "ta4279fc6e2d075c1" : "tb3f6f0b202adf8c4"));
         if (s.Status == 4)
         {
             p.Add(E17Text.Get("t871ae1f875f42960"));
-            if (has("q4AdmissionV022")) p.Add(E17Text.Get("t99ef94984cee8a29"));
-            if (has("q4AdmissionEndV022")) p.Add(E17Text.Get("ta4279fc6e2d075c1"));
         }
         return p.Count == 0 ? "" : E17Text.Get("t12bf508fc1ad29ee") + string.Join("\n\n", p);
     }

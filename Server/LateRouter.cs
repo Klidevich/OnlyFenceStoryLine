@@ -108,7 +108,7 @@ public sealed class LateQuestRouter : ItemEventRouter
                     if (!view.Active(key)) throw new InvalidOperationException("E17 late quest is not active");
                     if (!LateRules.CanFinish(key, view, state)) throw new InvalidOperationException("E17 authored completion guard is not satisfied");
                     if (key == "q7" && (state.SettlementIntent is not ("cash" or "tools") ||
-                        !view.Done("q7/give/transportReturnLog") || !view.Done("q7/give/rudinTools") || !view.Done("q7/find/transportRefusal")))
+                        !view.Done("q7/give/rudinTools")))
                         throw new InvalidOperationException("E17 q7 settlement is not ready");
                     if (key == "q7" && templates.Quests.TryGetValue(body.QuestId, out var q7) &&
                         q7.Rewards?.GetValueOrDefault("Success")?.Any(r => r.Items?.Any(i => i.Template.ToString() == LateIds.Rouble) == true) == true)

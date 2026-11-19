@@ -48,6 +48,5 @@ internal static class Q1FlowPolicy
     }
 
     internal static string ActiveEntry(bool ticketGiven, bool radioGiven) =>
-        ticketGiven ? (radioGiven ? "e17_active_both" : "e17_active_ticket") :
-        radioGiven ? "e17_active_radio" : "e17_active_none";
+        ticketGiven ? "e17_active_both" : "e17_active_none";
 }

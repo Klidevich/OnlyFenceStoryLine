@@ -107,10 +107,11 @@ internal static class VisitLoading
             if (!replaying || active == null || __instance is not TraderDialogScreen.TraderDialogScreenController controller ||
                 controller.TraderId != active.Tree.TraderId || !ReferenceEquals(controller.QuestController, active.Quests)) return true;
             active.Dialog = controller.DialogController;
-            __result = Prepare(active, controller, screenState, forced);
+            __result = PrepareVisitAsync(active, controller, screenState, forced);
             return false;
         }
-        static async Task<bool> Prepare(Host host, TraderDialogScreen.TraderDialogScreenController controller, EScreenState state, bool forced)
+        // Harmony treats a method named Prepare as its synchronous lifecycle hook.
+        static async Task<bool> PrepareVisitAsync(Host host, TraderDialogScreen.TraderDialogScreenController controller, EScreenState state, bool forced)
         {
             try
             {

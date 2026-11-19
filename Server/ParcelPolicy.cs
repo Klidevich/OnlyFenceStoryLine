@@ -11,7 +11,25 @@ public static class ParcelPolicy
     public const string PlacementId = "de0d30cb048f4fe1178b5bcd";
     public const string ReplacementText = "e17 parcel replacement";
 
-    public enum Decision { MissingProfile, NotActive, Placed, PendingMail, Owned, Replace }
+    public const long ReplacementCost = 50000;
+    public static bool Received(SptProfile profile) =>
+        profile.CharacterData?.PmcData?.Variables?.GetValueOrDefault(ProgressPolicy.Id("q2Received")) == 1;
+    public enum Decision { MissingProfile, NotActive, Placed, PendingMail, Owned, Replace, InsufficientFunds }
+    public static bool PayReplacement(SptProfile profile)
+    {
+        var items = profile.CharacterData!.PmcData!.Inventory!.Items!;
+        var money = items.Where(x => x.Template.ToString() == "5449016a4bdc2d6f028b456f").ToList();
+        if (money.Sum(x => Math.Floor(x.Upd?.StackObjectsCount ?? 0)) < ReplacementCost) return false;
+        double remaining = ReplacementCost;
+        foreach (var item in money)
+        {
+            var count = Math.Floor(item.Upd?.StackObjectsCount ?? 0);
+            var take = Math.Min(count, remaining);
+            if (take == count) items.Remove(item); else item.Upd!.StackObjectsCount = count - take;
+            remaining -= take; if (remaining <= 0) break;
+        }
+        return true;
+    }
 
     public static Decision Evaluate(SptProfile? profile, long now)
     {

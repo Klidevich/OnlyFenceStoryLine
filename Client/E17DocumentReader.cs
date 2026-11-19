@@ -47,6 +47,8 @@ internal static class E17DocumentReader
     static bool Available(QuestController qc, string template)
     {
         if (qc?.Profile == null) return false;
+        if (template == NarrativePolicy.Ticket) return Found(qc, VisitFlow.First(qc), template) ||
+            VisitFlow.Given(VisitFlow.First(qc), template) || VisitFlow.First(qc)?.QuestStatus == EQuestStatus.Success;
         if (template == Q2Policy.Note) return Found(qc, Q2Flow.Quest(qc), template) || Has(qc, Q2Policy.NoteReadFact);
         if (template == Q3Policy.Books) return Found(qc, Q3Flow.Quest(qc), template) ||
             VisitFlow.Given(Q3Flow.Quest(qc), template) || Q3Flow.Quest(qc)?.QuestStatus == EQuestStatus.Success;
@@ -173,7 +175,7 @@ internal static class E17DocumentReader
         {
             if (__instance.Quest?.Id != Plugin.ChapterId) return;
             var qc = Controller();
-            var documents = new[] { Q2Policy.Note, Q3Policy.Books, Q4Policy.Request, Q4Policy.PersonalRequest, Q4Policy.PersonalCopy }
+            var documents = new[] { NarrativePolicy.Ticket, Q2Policy.Note, Q3Policy.Books, Q4Policy.Request, Q4Policy.PersonalRequest, Q4Policy.PersonalCopy }
                 .Where(template => Available(qc, template))
                 .Select(template => (ChapterModel.ELink.Item, template, "e17-document:" + template));
             // Merely adding a saved icon does not mark the document as read.

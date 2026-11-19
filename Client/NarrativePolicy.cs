@@ -26,9 +26,7 @@ internal static class NarrativePolicy
 
     internal static bool Preparing(Func<string, bool> has) => has("radioFirst") || has("radioSecond") || has("finished");
     internal static IEnumerable<string> JournalFacts => Facts.Values.Concat(new[] { "books", "bill", "actExplained", "coordinatorClaim", "motive", "briefed", "intro2_motive", "intro3_rescue", "intro3_delivery", "intro3_van", "intro4_closed", "intro4_company", "q1RadioVoice", "q2Brief", "q1RadioV018" });
-    internal static string HandoverTarget(bool ticket, bool otherGiven, bool radioFound, bool radioHeld) =>
-        !ticket ? (otherGiven ? "e17_radio_second" : "e17_radio_first") : otherGiven ? "e17_ticket_second" :
-        radioHeld ? "e17_ticket_held" : radioFound ? "e17_ticket_lost" : "e17_ticket_unknown";
+    internal static string HandoverTarget(bool ticket, bool otherGiven, bool radioFound, bool radioHeld) => "e17_radio_second";
 
     internal static string Conversation(Func<string, bool> has, bool accepted)
     {
@@ -57,18 +55,15 @@ internal static class NarrativePolicy
         }
         if (has("introOursV018")) paragraphs.Add(E17Text.Get("t71131ed4f5f2397b"));
         if (has("archive")) paragraphs.Add(E17Text.Get("te2305f3ddf21e6ed"));
-        if (has("q1Separate")) paragraphs.Add(E17Text.Get("t0180000000000101"));
-        if (has("q1Person")) paragraphs.Add(E17Text.Get("t0180000000000102"));
         return paragraphs.Count == 0 ? "" : E17Text.Get("t34a3854c443907c0") + string.Join("\n\n", paragraphs);
     }
 
     internal static string Debrief(Func<string, bool> has, bool ticketGiven, bool radioGiven, bool success)
     {
         var p = new List<string>();
-        if (ticketGiven && !has("ticketSecond")) p.Add(E17Text.Get("t1c23b5e1c1fd9b5d"));
-        if (radioGiven)
+        if (ticketGiven && !success)
         {
-            p.Add(E17Text.Get("t269800a86560bac7"));
+            p.Add(E17Text.Get("t1c23b5e1c1fd9b5d"));
             if (has("q1RadioV018")) p.Add(E17Text.Get("ta8a2bd7785b564f7"));
         }
         if (has("workshop")) p.Add(E17Text.Get("t25cf33128b49e86d"));
@@ -76,23 +71,17 @@ internal static class NarrativePolicy
         if (success)
         {
             p.Add(E17Text.Get("t72a9e2bafe441072"));
-            if (has("finished")) p.Add(E17Text.Get("ta93ad8d45b34c797"));
         }
-        else if (ticketGiven && radioGiven) p.Add(E17Text.Get("tcab12f6ddbf52c17"));
+        else if (ticketGiven) p.Add(E17Text.Get("t410a42627b587d5a"));
         return p.Count == 0 ? "" : E17Text.Get("t2c16fa82a025bc2a") + string.Join("\n\n", p);
     }
 
     internal static string Objective(bool active, bool ticketFound, bool radioFound, bool ticketHeld, bool radioHeld, bool ticketGiven, bool radioGiven)
     {
         if (!active) return "";
-        if (ticketGiven && radioGiven) return E17Text.Get("t410a42627b587d5a");
-        var missing = new List<string>();
-        if (ticketFound && !ticketHeld && !ticketGiven) missing.Add(E17Text.Get("t5362e47a115c99fc"));
-        if (radioFound && !radioHeld && !radioGiven) missing.Add(E17Text.Get("t2d0ce96a2b8c412b"));
-        var prefix = missing.Count == 0 ? "" : E17Text.Get("t37db995e19e327e0") + string.Join("; ", missing) + ".\n";
-        if (!ticketFound && !ticketGiven) return prefix + E17Text.Get("t3a351674e94bde3c");
-        if (!radioFound && !radioGiven) return prefix + E17Text.Get("t615f108daec2d3c7");
-        if (missing.Count > 0) return prefix.TrimEnd();
-        return ticketGiven ? E17Text.Get("tf90d8adb5d044e8f") : radioGiven ? E17Text.Get("t5c59e7dc5c6bb4f4") : E17Text.Get("t184a4001b925f4e1");
+        if (ticketGiven) return E17Text.Get("t410a42627b587d5a");
+        if (!ticketFound) return E17Text.Get("t3a351674e94bde3c");
+        if (!ticketHeld) return E17Text.Get("t0270000000000101");
+        return E17Text.Get("t184a4001b925f4e1");
     }
 }

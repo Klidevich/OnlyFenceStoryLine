@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
+using System.Text.Json;
+using SPTarkov.Server.Core.Utils.Cloners;
+using SPTarkov.Server.Core.Models.Eft.ItemEvent;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Helpers.Profile;
@@ -17,6 +20,18 @@ namespace CustomQuests.E17.Server;
 public sealed class ParcelRequest : IRequestData
 {
     [JsonPropertyName("profileId")] public string? ProfileId { get; set; }
+    [JsonPropertyName("transactionId")] public string? TransactionId { get; set; }
+}
+
+public sealed class ParcelPaymentReceipt
+{
+    public string TransactionId { get; set; } = "";
+    public ItemEventRouterResponse? InventoryEffect { get; set; }
+}
+public sealed class ParcelPaymentLedger
+{
+    public Dictionary<string, ParcelPaymentReceipt> Requests { get; set; } = [];
+    public string? Last { get; set; }
 }
 
 public static class ParcelRequestGate
@@ -33,7 +48,7 @@ public static class ParcelRequestGate
 
 [Injectable]
 public class ParcelRouter(JsonUtil json, ProfileHelper profiles, SaveServer saves,
-    TemplateTable templates, MailSendService mail, HttpResponseUtil response)
+    TemplateTable templates, MailSendService mail, HttpResponseUtil response, ICloner cloner)
     : StaticRouter(json, [new RouteAction("/customquests/e17/parcel/status",
         async (_, info, sessionId, _, ct) =>
         {
@@ -48,24 +63,53 @@ public class ParcelRouter(JsonUtil json, ProfileHelper profiles, SaveServer save
         }, typeof(ParcelRequest)), new RouteAction("/customquests/e17/parcel/replace",
         async (url, info, sessionId, output, ct) =>
         {
+            var request = (ParcelRequest)info;
+            ItemEventRouterResponse? effect = null;
+            var effectId = request.TransactionId;
             var decision = await ParcelRequestGate.Run(sessionId, ct, async () =>
             {
                 // No client-supplied profile, item ID, count, quest or placement state.
                 var profile = profiles.GetFullProfile(sessionId);
                 if (profile?.CharacterData?.PmcData?.Id.ToString() != ((ParcelRequest)info).ProfileId)
                     return ParcelPolicy.Decision.MissingProfile;
+                if (!Guid.TryParseExact(request.TransactionId, "N", out _)) return ParcelPolicy.Decision.MissingProfile;
+                const string receiptKey = "customquestsE17ParcelPaymentsV027";
+                var ledger = new ParcelPaymentLedger();
+                ParcelPaymentReceipt? receipt = null;
+                if (profile!.ExtensionData?.TryGetValue(receiptKey, out var raw) == true)
+                {
+                    ledger = raw as ParcelPaymentLedger ?? JsonSerializer.Deserialize<ParcelPaymentLedger>(JsonSerializer.Serialize(raw)) ?? new();
+                    if (ledger.Requests.TryGetValue(request.TransactionId!, out receipt))
+                    { effect = receipt.InventoryEffect; return ParcelPolicy.Decision.PendingMail; }
+                    if (ledger.Last != null) ledger.Requests.TryGetValue(ledger.Last, out receipt);
+                }
                 var result = ParcelPolicy.Evaluate(profile, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
                 if (result != ParcelPolicy.Decision.Replace && result != ParcelPolicy.Decision.PendingMail) return result;
+                if (result == ParcelPolicy.Decision.PendingMail && receipt != null)
+                { effect = receipt.InventoryEffect; effectId = receipt.TransactionId; return result; }
                 if (!templates.Items.ContainsKey(ParcelPolicy.TemplateId) || !templates.Quests.ContainsKey(ParcelPolicy.QuestId))
                     throw new InvalidOperationException("E17 content pack is missing; parcel not issued");
+                var before = cloner.Clone(profile!.CharacterData!.PmcData!.Inventory!.Items)!;
+                var paid = await LateTransaction.Run(profile, cloner, () =>
+                {
                 if (result == ParcelPolicy.Decision.Replace)
+                {
+                    // A missing first issue is recovery, not a loss of a received parcel.
+                    if (ParcelPolicy.Received(profile) && !ParcelPolicy.PayReplacement(profile)) return Task.FromResult(false);
                     mail.SendLocalisedNpcMessageToPlayer(sessionId, new MongoId("579dc571d53a0658a154fbec"),
                         MessageType.NpcTraderMessage, ParcelPolicy.ReplacementText,
                         [new Item { Id = new MongoId(), Template = new MongoId(ParcelPolicy.TemplateId), Upd = new Upd { StackObjectsCount = 1 } }]);
+                }
+                effect = LateInventoryDelta.Create(sessionId, profile.CharacterData.PmcData, before, cloner);
+                profile.ExtensionData ??= new();
+                ledger.Last = request.TransactionId!;
+                ledger.Requests[request.TransactionId!] = new ParcelPaymentReceipt { TransactionId = request.TransactionId!, InventoryEffect = effect };
+                profile.ExtensionData[receiptKey] = ledger;
                 // Persist an already pending letter too: its first disk write may have failed.
                 profile!.ExtensionData["customquestsE17ParcelRevision"] = Guid.NewGuid().ToString("N");
-                await saves.SaveProfileAsync(sessionId, ct);
-                return result;
+                return Task.FromResult(true);
+                }, async () => { await saves.SaveProfileAsync(sessionId, ct); });
+                return paid ? result : ParcelPolicy.Decision.InsufficientFunds;
             });
-            return response.GetBody(new { profileId = ((ParcelRequest)info).ProfileId, status = decision.ToString() });
+            return response.GetBody(new { profileId = request.ProfileId, status = decision.ToString(), inventoryEffect = effect, transactionId = effectId });
         }, typeof(ParcelRequest))]) { }

@@ -60,9 +60,11 @@ internal static class Q2Policy
             case "e17_q2_remind": return Active(status) && !placed && !has("q2Reported");
             case "e17_q2_remind_reported": return Active(status) && !placed && has("q2Reported");
             case "e17_q2_replace": return status == 2 && !placed && !held && has("q2Received") && parcel == ParcelAvailability.Missing;
+            case "e17_q2_replace_confirm": return status == 2 && !placed && !held && has("q2Received") && parcel == ParcelAvailability.Missing;
+            case "e17_q2_recover_confirm": return status == 2 && !placed && !held && !has("q2Received") && parcel == ParcelAvailability.Missing;
             case "e17_q2_missing": return status == 2 && !placed && !held && !has("q2Received") && parcel == ParcelAvailability.Missing;
             case "e17_q2_pending": return Active(status) && !placed;
-            case "e17_q2_wait": return has("q2ReadyV018") || Active(status) || status == 4;
+            case "e17_q2_wait": return false;
             case "e17_q2_loss": return status != 4 && !placed && (has("q2ReadyV018") || Ready(has));
             case "e17_q2_result": return status is 3 or 4 && placed;
             case "e17_q2_cargo": case "e17_q2_result_resume": return status == 4 && has("q2ResultV018") && !has("q2CargoV018");
@@ -84,7 +86,7 @@ internal static class Q2Policy
         if (found) return receipt +
             E17Text.Get("t4795bd6d5f8296b6") + "\n" +
             E17Text.Get("tc3c80380342a80a7");
-        return receipt + E17Text.Get("td8fc3f24510c323b");
+        return receipt + E17Text.Get("td8fc3f24510c323b") + "\n\n" + E17Text.Get("t0270000000000202");
     }
 
     internal static string Journal(int status, bool placed, bool held, Func<string, bool> has)
@@ -94,16 +96,13 @@ internal static class Q2Policy
         else if (has("q2BriefV018")) p.Add(E17Text.Get("t460177262ee2aa55"));
         else if (has("q2ReadyV018")) p.Add(E17Text.Get("t4d02e4f97e01c7b5"));
         if (has("q2ArrivalV022")) p.Add(E17Text.Get("t0220000000000202"));
-        if (has(NoteReadFact)) p.Add(E17Text.Get("t0220000000000201"));
         if (has("q2Received")) p.Add(E17Text.Get(has("q2ReplacementReceived") ? "t5673e0516e3e60d4" :
             held && !placed ? "t0eafa3245edae52d" : "t0220000000000203"));
-        if (has("q2Wait")) p.Add(E17Text.Get("t0ab1529fe74e1dec"));
         if (has("q2Replacement")) p.Add(E17Text.Get("t5be10f7f5778fd55"));
         if (status == 4)
         {
             p.Add(E17Text.Get("t9e10d708827473ec"));
-            if (has("q2ResultV018")) p.Add(E17Text.Get("t7eeb6008ac61a6f0"));
-            if (has("q2CargoV018")) p.Add(E17Text.Get("tc3ad27792471f4b7"));
+            if (has("q2ResultV018")) p.Add(E17Text.Get("tc3ad27792471f4b7"));
         }
         else if (placed) p.Add(E17Text.Get("tfb4038b71f6eba41"));
         return p.Count == 0 ? "" : E17Text.Get("tb34d5a3647c1eb05") + string.Join("\n\n", p);

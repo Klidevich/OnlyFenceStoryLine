@@ -35,7 +35,7 @@ public static class ProgressPolicy
         "q4Ready", "q4Brief", "q4Wait", "q4ClaimAcknowledged", "q4Debt", "q4BusinessAcknowledged", "q4PaidShown", "q4Received"
         , "introOursV018", "q1RadioV018", "q1Separate", "q1Person", "q2ReadyV018", "q2BriefV018",
         "q2ResultV018", "q2CargoV018", "q3ClosedAccountV018", "q4ReadyV018", "q4BriefV018",
-        "q2NoteReadV022", "q3BooksReadV022", "q2ArrivalV022", "q4AdmissionV022", "q4AdmissionEndV022"
+        "q2NoteReadV022", "q3BooksReadV022", "q2ArrivalV022", "q4AdmissionV022", "q4AdmissionEndV022", "q3DriverV027"
     };
     static ProgressPolicy()
     {

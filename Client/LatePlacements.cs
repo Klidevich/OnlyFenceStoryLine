@@ -42,7 +42,7 @@ internal static class LatePlacements
         if (q == null || condition == null) return false;
         var proof = Proof(qc, key);
         if (key == "q20/place/finalAuthorization" && proof == null) return false;
-        if (proof != null && qc.Profile.GetTaskConditionCounter(q, proof).Value >= 1) return false;
+        if (proof != null && StoryCounters.Value(qc.Profile, q.Id, proof) >= 1) return false;
         var repeat = key == "q18/place/familyClosedCopy" && proof != null &&
             LateFlow.Atom(qc, "server:q18.familyCanRedeliver") && (ActiveOrComplete(q));
         return repeat || LateFlow.Active(q) && !q.IsConditionDone(condition);
@@ -88,7 +88,7 @@ internal static class LatePlacements
                 if (proof != null)
                 {
                     var q = LateFlow.Quest(qc, key.Split('/')[0]);
-                    qc.Profile.GetTaskConditionCounter(q, proof).Value = 1;
+                    StoryCounters.Mark(qc.Profile, q.Id, proof, "LeaveItemAtLocation");
                 }
                 owner.ClearInteractionState();
             });
